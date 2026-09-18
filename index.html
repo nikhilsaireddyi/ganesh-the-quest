@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="description" content="GANESH: THE QUEST - A Cinematic 2D/2.5D Indian Festival Adventure Game" />
+    <meta name="theme-color" content="#ff7700" />
+    <title>GANESH: THE QUEST</title>
+    <link rel="stylesheet" href="/src/style.css" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  </head>
+  <body>
+    <div id="game-container">
+      <canvas id="gameCanvas" width="1280" height="720"></canvas>
+      <div id="audio-banner">🎵 Click or Tap anywhere to enable festival sound</div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+    <script>
+      // In development / localhost, ensure any service workers and caches are cleared to avoid intercepting Vite HMR
+      if ('serviceWorker' in navigator) {
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          navigator.serviceWorker.getRegistrations().then((regs) => {
+            for (let reg of regs) reg.unregister();
+          });
+          if (window.caches) {
+            caches.keys().then((keys) => {
+              for (let k of keys) caches.delete(k);
+            });
+          }
+        } else if (window.location.protocol.startsWith('http')) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
+          });
+        }
+      }
+    </script>
+  </body>
+</html>
