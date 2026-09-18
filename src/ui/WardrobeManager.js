@@ -76,18 +76,23 @@ export class WardrobeManager {
       const mx = mouse.x;
       const my = mouse.y;
 
-      // Check click outside to close (or close button at top-right of modal)
-      if (mx < 300 || mx > 980 || my < 90 || my > 630 || (mx > 930 && mx < 970 && my > 105 && my < 145)) {
+      const bx = 280;
+      const by = 60;
+      const bw = 720;
+      const bh = 600;
+
+      // Check click outside to close or close button [X] at top-right
+      if (mx < bx || mx > bx + bw || my < by || my > by + bh || (mx > bx + bw - 50 && mx < bx + bw - 15 && my > by + 15 && my < by + 55)) {
         this.showModal = false;
         audioManager.playSnap();
         mouse.justPressed = false;
         return;
       }
 
-      // Check Kurta Color Circles (row at y: 220, x centers from 580 to 920)
+      // Check Kurta Color Circles (row 0 at cy: 158, row 1 at cy: 212)
       KURTA_COLORS.forEach((color, i) => {
-        const cx = 580 + (i % 3) * 115;
-        const cy = 210 + Math.floor(i / 3) * 55;
+        const cx = 575 + (i % 3) * 115;
+        const cy = 158 + Math.floor(i / 3) * 54;
         const dist = Math.hypot(mx - cx, my - cy);
         if (dist <= 24) {
           this.kurtaColor = color.hex;
@@ -97,11 +102,11 @@ export class WardrobeManager {
         }
       });
 
-      // Check Headwear Options (y: 350 to 450)
+      // Check Headwear Options (row 0 at hy: 298, row 1 at hy: 340)
       HEADWEAR_STYLES.forEach((hw, i) => {
-        const hx = 550 + (i % 2) * 180;
-        const hy = 345 + Math.floor(i / 2) * 44;
-        if (mx >= hx && mx <= hx + 165 && my >= hy && my <= hy + 36) {
+        const hx = 540 + (i % 2) * 185;
+        const hy = 298 + Math.floor(i / 2) * 42;
+        if (mx >= hx && mx <= hx + 175 && my >= hy && my <= hy + 34) {
           this.headwear = hw.id;
           this.save();
           audioManager.playSnap();
@@ -109,11 +114,11 @@ export class WardrobeManager {
         }
       });
 
-      // Check Tilak Options (y: 470 to 520)
+      // Check Tilak Options (ty: 435)
       TILAK_STYLES.forEach((tk, i) => {
-        const tx = 550 + i * 125;
-        const ty = 460;
-        if (mx >= tx && mx <= tx + 115 && my >= ty && my <= ty + 36) {
+        const tx = 540 + i * 125;
+        const ty = 435;
+        if (mx >= tx && mx <= tx + 118 && my >= ty && my <= ty + 36) {
           this.tilak = tk.id;
           this.save();
           audioManager.playSnap();
@@ -121,8 +126,8 @@ export class WardrobeManager {
         }
       });
 
-      // Done / Confirm Button (y: 545, center 640)
-      if (mx >= 540 && mx <= 740 && my >= 540 && my <= 585) {
+      // Done / Confirm Button (y: 520 to 568, x: 620 to 840)
+      if (mx >= 620 && mx <= 840 && my >= 520 && my <= 568) {
         this.showModal = false;
         audioManager.playSuccess();
         mouse.justPressed = false;
@@ -143,10 +148,10 @@ export class WardrobeManager {
     ctx.fillStyle = 'rgba(6, 10, 22, 0.88)';
     ctx.fillRect(0, 0, 1280, 720);
 
-    const bx = 300;
-    const by = 85;
-    const bw = 680;
-    const bh = 535;
+    const bx = 280;
+    const by = 60;
+    const bw = 720;
+    const bh = 600;
 
     // Modal card background
     ctx.fillStyle = '#0f172a';
@@ -162,17 +167,17 @@ export class WardrobeManager {
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 24px serif';
     ctx.textAlign = 'center';
-    ctx.fillText('👕 HERO FESTIVAL WARDROBE', bx + bw / 2, by + 40);
+    ctx.fillText('👕 HERO FESTIVAL WARDROBE', bx + bw / 2, by + 38);
 
     // Close button (X)
     ctx.fillStyle = '#ff7043';
-    ctx.font = 'bold 20px sans-serif';
-    ctx.fillText('✕', bx + bw - 35, by + 35);
+    ctx.font = 'bold 22px sans-serif';
+    ctx.fillText('✕', bx + bw - 32, by + 38);
 
     // --- LEFT PREVIEW PANEL ---
     ctx.fillStyle = '#1e293b';
     ctx.beginPath();
-    ctx.roundRect(bx + 30, by + 75, 190, 420, 12);
+    ctx.roundRect(bx + 25, by + 60, 205, 515, 12);
     ctx.fill();
     ctx.strokeStyle = '#334155';
     ctx.lineWidth = 1.5;
@@ -180,10 +185,10 @@ export class WardrobeManager {
 
     ctx.fillStyle = '#94a3b8';
     ctx.font = 'bold 12px sans-serif';
-    ctx.fillText('LIVE PREVIEW', bx + 125, by + 102);
+    ctx.fillText('LIVE PREVIEW', bx + 127, by + 86);
 
     // Draw Live Hero Preview in center of preview panel
-    this.renderHeroPreview(ctx, bx + 125, by + 380);
+    this.renderHeroPreview(ctx, bx + 127, by + 460);
 
     // --- RIGHT CUSTOMIZATION OPTIONS ---
 
@@ -191,17 +196,17 @@ export class WardrobeManager {
     ctx.textAlign = 'left';
     ctx.fillStyle = '#ffd54f';
     ctx.font = 'bold 15px sans-serif';
-    ctx.fillText('1. Silk Kurta Color', bx + 245, by + 95);
+    ctx.fillText('1. Silk Kurta Color', 540, 128);
 
     KURTA_COLORS.forEach((c, i) => {
-      const cx = 580 + (i % 3) * 115;
-      const cy = 210 + Math.floor(i / 3) * 55;
+      const cx = 575 + (i % 3) * 115;
+      const cy = 158 + Math.floor(i / 3) * 54;
       const isSelected = this.kurtaColor === c.hex;
 
       // Color circle
       ctx.fillStyle = c.hex;
       ctx.beginPath();
-      ctx.arc(cx, cy, 20, 0, Math.PI * 2);
+      ctx.arc(cx, cy, 18, 0, Math.PI * 2);
       ctx.fill();
 
       // Border & selection ring
@@ -219,23 +224,23 @@ export class WardrobeManager {
       ctx.fillStyle = isSelected ? '#ffd54f' : '#94a3b8';
       ctx.font = '11px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(c.name.split(' ')[1] || c.name, cx, cy + 32);
+      ctx.fillText(c.name.split(' ')[1] || c.name, cx, cy + 28);
     });
 
     // 2. Traditional Headwear (Pheta)
     ctx.textAlign = 'left';
     ctx.fillStyle = '#ffd54f';
     ctx.font = 'bold 15px sans-serif';
-    ctx.fillText('2. Traditional Headwear & Pheta', bx + 245, by + 230);
+    ctx.fillText('2. Traditional Headwear & Pheta', 540, 278);
 
     HEADWEAR_STYLES.forEach((hw, i) => {
-      const hx = 550 + (i % 2) * 180;
-      const hy = 345 + Math.floor(i / 2) * 44;
+      const hx = 540 + (i % 2) * 185;
+      const hy = 298 + Math.floor(i / 2) * 42;
       const isSelected = this.headwear === hw.id;
 
       ctx.fillStyle = isSelected ? '#e65100' : '#1e293b';
       ctx.beginPath();
-      ctx.roundRect(hx, hy, 165, 36, 8);
+      ctx.roundRect(hx, hy, 175, 34, 8);
       ctx.fill();
 
       ctx.strokeStyle = isSelected ? '#ffd700' : '#475569';
@@ -245,23 +250,23 @@ export class WardrobeManager {
       ctx.fillStyle = isSelected ? '#ffffff' : '#cbd5e1';
       ctx.font = 'bold 12px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(hw.name, hx + 82, hy + 23);
+      ctx.fillText(hw.name, hx + 87, hy + 22);
     });
 
-    // 3. Sacred Tilak
+    // 3. Sacred Tilak Mark (with generous 41px clearance above)
     ctx.textAlign = 'left';
     ctx.fillStyle = '#ffd54f';
     ctx.font = 'bold 15px sans-serif';
-    ctx.fillText('3. Sacred Tilak Mark', bx + 245, by + 345);
+    ctx.fillText('3. Sacred Tilak Mark', 540, 415);
 
     TILAK_STYLES.forEach((tk, i) => {
-      const tx = 550 + i * 125;
-      const ty = 460;
+      const tx = 540 + i * 125;
+      const ty = 435;
       const isSelected = this.tilak === tk.id;
 
       ctx.fillStyle = isSelected ? '#c2410c' : '#1e293b';
       ctx.beginPath();
-      ctx.roundRect(tx, ty, 115, 36, 8);
+      ctx.roundRect(tx, ty, 118, 36, 8);
       ctx.fill();
 
       ctx.strokeStyle = isSelected ? '#ffd700' : '#475569';
@@ -271,13 +276,13 @@ export class WardrobeManager {
       ctx.fillStyle = isSelected ? '#ffffff' : '#cbd5e1';
       ctx.font = 'bold 11px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(tk.name, tx + 57, ty + 23);
+      ctx.fillText(tk.name, tx + 59, ty + 23);
     });
 
-    // CONFIRM BUTTON
+    // CONFIRM BUTTON (with clean clearance)
     ctx.fillStyle = '#16a34a';
     ctx.beginPath();
-    ctx.roundRect(bx + 240, by + 445, 200, 44, 10);
+    ctx.roundRect(620, 520, 220, 48, 10);
     ctx.fill();
     ctx.strokeStyle = '#86efac';
     ctx.lineWidth = 2;
@@ -286,7 +291,7 @@ export class WardrobeManager {
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 16px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('SAVE & WEAR ✓', bx + 340, by + 473);
+    ctx.fillText('SAVE & WEAR ✓', 730, 550);
 
     ctx.restore();
   }

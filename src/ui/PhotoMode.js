@@ -128,8 +128,8 @@ export class PhotoMode {
           return;
         }
 
-        // Exit button (top right: 1200, 40)
-        if (mouse.x >= 1150 && mouse.x <= 1260 && mouse.y >= 20 && mouse.y <= 65) {
+        // Exit button (top right: 1140 to 1255, y: 15 to 62)
+        if (mouse.x >= 1140 && mouse.x <= 1255 && mouse.y >= 15 && mouse.y <= 62) {
           this.exit();
           mouse.justPressed = false;
           return;
@@ -279,14 +279,15 @@ export class PhotoMode {
     // Exit Button Top Right
     ctx.fillStyle = '#dc2626';
     ctx.beginPath();
-    ctx.roundRect(1160, 20, 85, 36, 8);
+    ctx.roundRect(1150, 18, 95, 40, 10);
     ctx.fill();
     ctx.strokeStyle = '#fca5a5';
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 2;
     ctx.stroke();
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 13px sans-serif';
-    ctx.fillText('EXIT ✕', 1202, 43);
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('EXIT ✕', 1197, 43);
 
     // Scrapbook Button Bottom Right
     ctx.fillStyle = '#0f172a';

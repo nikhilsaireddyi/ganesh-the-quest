@@ -59,7 +59,11 @@ export class UIManager {
     const mouse = input.mouse;
 
     // 1. Check HUD Button Clicks during normal gameplay
-    if (!this.isPaused && !this.showSettings && !this.showCredits) {
+    const isPhotoActive = this.game.photoMode && (this.game.photoMode.active || this.game.photoMode.showScrapbook);
+    const isWardrobeActive = this.game.wardrobe && this.game.wardrobe.showModal;
+    const isBadgesActive = this.game.achievements && this.game.achievements.showModal;
+
+    if (!this.isPaused && !this.showSettings && !this.showCredits && !isPhotoActive && !isWardrobeActive && !isBadgesActive) {
       if (mouse.justPressed) {
         // Click Fullscreen Button [ ⛶ FULL ] (x: 915 to 1025, y: 20 to 58)
         if (mouse.x >= 915 && mouse.x <= 1025 && mouse.y >= 20 && mouse.y <= 58) {
@@ -209,6 +213,7 @@ export class UIManager {
 
   renderHUD(ctx, mission, playerX = 300, isSprinting = false) {
     if (!mission) return;
+    if (this.game.photoMode && (this.game.photoMode.active || this.game.photoMode.showScrapbook)) return;
 
     ctx.save();
     // 1. MISSION CARD (Top-Left)
