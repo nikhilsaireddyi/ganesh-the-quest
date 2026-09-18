@@ -1,10 +1,21 @@
 /**
  * GeneratorRepair - Mission 7 Mini-game
- * 3-step interactive repair sequence:
- * Step 1: Reconnect cable -> Step 2: Activate breaker switch -> Step 3: Pull recoil starter.
+ * Fully randomized interactive repair sequence:
+ * - Dynamic layout: Cable bay, Power Breaker, and Starter Recoil are randomly positioned on every game.
+ * - Dynamic heavy cable types: Random industrial color themes and ratings.
+ * - Dynamic starter recoil pulls: 1 or 2 rhythmic engine starter pulls.
+ * - Active step illumination: Auric pulsing glow highlights the active objective component.
  */
 
 import { audioManager } from '../audio/AudioManager.js';
+
+const CABLE_TYPES = [
+  { name: '440V Main Cable', wire: '#d50000', plug: '#ff5252' },
+  { name: 'Backup Feed Line', wire: '#0288d1', plug: '#40c4ff' },
+  { name: 'Generator Busbar', wire: '#fbc02d', plug: '#ffee58' },
+  { name: 'Ground Earth Wire', wire: '#2e7d32', plug: '#69f0ae' },
+  { name: 'Auxiliary Dyno Line', wire: '#e65100', plug: '#ff9800' }
+];
 
 export class GeneratorRepair {
   constructor(onComplete) {
@@ -13,17 +24,69 @@ export class GeneratorRepair {
     this.completed = false;
     this.step = 1; // 1: Cable, 2: Switch, 3: Starter Pull
     this.completionTimer = 0;
+    this.animTime = 0;
 
-    // Cable positions
-    this.plug = { x: 380, y: 380, origX: 380, origY: 380, connected: false };
-    this.socket = { x: 520, y: 380, r: 24 };
+    // Component Positions (randomized on each start)
+    this.plug = { x: 340, y: 380, origX: 340, origY: 380, connected: false };
+    this.socket = { x: 440, y: 380, r: 24 };
+    this.cableRoot = { x: 220, y: 520 };
+    this.cableType = CABLE_TYPES[0];
 
-    // Switch
+    this.breaker = { x: 640, y: 380 };
     this.switchOn = false;
 
-    // Pull Cord
+    this.recoil = { x: 940, y: 380 };
+    this.pullsNeeded = 1;
+    this.pullsDone = 0;
     this.cordPulled = false;
-    this.cordY = 460;
+    this.handleShake = 0;
+  }
+
+  randomizeLayout() {
+    // 3 Bays across panel (panel width 920 from x: 180 to 1100)
+    const bays = [340, 640, 940];
+    // Randomly shuffle bay assignments
+    const shuffledBays = [...bays].sort(() => Math.random() - 0.5);
+
+    // 1. Cable & Socket in shuffledBays[0]
+    const cableBayX = shuffledBays[0];
+    const cableBayY = 380 + (Math.random() - 0.5) * 35;
+    this.socket = {
+      x: cableBayX + 55 + (Math.random() - 0.5) * 16,
+      y: cableBayY + (Math.random() - 0.5) * 16,
+      r: 24
+    };
+    const plugX = cableBayX - 70 + (Math.random() - 0.5) * 20;
+    const plugY = cableBayY + (Math.random() - 0.5) * 20;
+    this.plug = {
+      x: plugX,
+      y: plugY,
+      origX: plugX,
+      origY: plugY,
+      connected: false
+    };
+    this.cableRoot = {
+      x: cableBayX - 115,
+      y: 520 + (Math.random() - 0.5) * 20
+    };
+    this.cableType = CABLE_TYPES[Math.floor(Math.random() * CABLE_TYPES.length)];
+
+    // 2. Breaker Switch in shuffledBays[1]
+    this.breaker = {
+      x: shuffledBays[1] + (Math.random() - 0.5) * 25,
+      y: 380 + (Math.random() - 0.5) * 35
+    };
+    this.switchOn = false;
+
+    // 3. Starter Recoil in shuffledBays[2]
+    this.recoil = {
+      x: shuffledBays[2] + (Math.random() - 0.5) * 25,
+      y: 380 + (Math.random() - 0.5) * 35
+    };
+    this.pullsNeeded = Math.floor(Math.random() * 2) + 1; // 1 or 2 pulls
+    this.pullsDone = 0;
+    this.cordPulled = false;
+    this.handleShake = 0;
   }
 
   start() {
@@ -31,15 +94,17 @@ export class GeneratorRepair {
     this.completed = false;
     this.step = 1;
     this.completionTimer = 0;
-    this.plug.connected = false;
-    this.plug.x = this.plug.origX;
-    this.plug.y = this.plug.origY;
-    this.switchOn = false;
-    this.cordPulled = false;
+    this.animTime = 0;
+    this.randomizeLayout();
   }
 
   update(dt, input, particles) {
     if (!this.active) return;
+    this.animTime += dt;
+
+    if (this.handleShake > 0) {
+      this.handleShake = Math.max(0, this.handleShake - dt * 6);
+    }
 
     if (this.completed) {
       this.completionTimer += dt;
@@ -56,7 +121,7 @@ export class GeneratorRepair {
     if (this.step === 1) {
       if (mouse.isDown) {
         const dist = Math.hypot(mouse.x - this.plug.x, mouse.y - this.plug.y);
-        if (dist < 40) {
+        if (dist < 45) {
           this.plug.x = mouse.x;
           this.plug.y = mouse.y;
         }
@@ -64,13 +129,13 @@ export class GeneratorRepair {
 
       if (mouse.justReleased) {
         const distToSocket = Math.hypot(this.plug.x - this.socket.x, this.plug.y - this.socket.y);
-        if (distToSocket < 45) {
+        if (distToSocket < 50) {
           this.plug.connected = true;
           this.plug.x = this.socket.x;
           this.plug.y = this.socket.y;
           this.step = 2;
           audioManager.playBell();
-          particles.emitSparks(this.socket.x, this.socket.y, 14);
+          particles.emitSparks(this.socket.x, this.socket.y, 16);
         } else {
           this.plug.x = this.plug.origX;
           this.plug.y = this.plug.origY;
@@ -80,27 +145,37 @@ export class GeneratorRepair {
     // STEP 2: Activate Breaker Switch
     else if (this.step === 2) {
       if (mouse.justPressed) {
-        // Switch click zone (x: 640, y: 380)
-        const dist = Math.hypot(mouse.x - 640, mouse.y - 380);
-        if (dist < 36) {
+        const dist = Math.hypot(mouse.x - this.breaker.x, mouse.y - this.breaker.y);
+        if (dist < 42) {
           this.switchOn = true;
           this.step = 3;
           audioManager.playSnap();
-          particles.emitSparks(640, 380, 10);
+          particles.emitSparks(this.breaker.x, this.breaker.y, 14);
         }
       }
     }
     // STEP 3: Pull Recoil Cord
     else if (this.step === 3) {
       if (mouse.justPressed) {
-        // Handle click zone (x: 820, y: 380)
-        const dist = Math.hypot(mouse.x - 820, mouse.y - 380);
-        if (dist < 40) {
-          this.cordPulled = true;
-          this.completed = true;
-          audioManager.playSuccess();
-          particles.emitSparks(820, 380, 20);
-          particles.emitDivineAura(640, 380, 25);
+        const dist = Math.hypot(mouse.x - this.recoil.x, mouse.y - this.recoil.y);
+        if (dist < 48) {
+          this.pullsDone++;
+          this.handleShake = 1.0;
+
+          if (this.pullsDone < this.pullsNeeded) {
+            // Sputter pull
+            audioManager.playSnap();
+            audioManager.playSpark();
+            particles.emitSparks(this.recoil.x, this.recoil.y, 12);
+            particles.emitCollapseDust(this.recoil.x, this.recoil.y, 10);
+          } else {
+            // Engine ignition!
+            this.cordPulled = true;
+            this.completed = true;
+            audioManager.playSuccess();
+            particles.emitSparks(this.recoil.x, this.recoil.y, 25);
+            particles.emitDivineAura(this.recoil.x, this.recoil.y, 25);
+          }
         }
       }
     }
@@ -133,7 +208,7 @@ export class GeneratorRepair {
     ctx.font = '16px sans-serif';
     ctx.fillText('Step-by-step restoration of backup festival power.', 640, 160);
 
-    // Progress Tabs
+    // Progress Tabs at top
     const steps = [
       { num: 1, title: '1. Reconnect Cable', active: this.step === 1, done: this.step > 1 },
       { num: 2, title: '2. Flip Breaker', active: this.step === 2, done: this.step > 2 },
@@ -153,9 +228,20 @@ export class GeneratorRepair {
       ctx.fillText(s.title, bx, 216);
     });
 
-    // STEP 1 SECTION: Cable & Socket
+    const glowPulse = Math.sin(this.animTime * 6) * 5;
+
+    // --- COMPONENT 1: CABLE & SOCKET ---
     ctx.save();
-    // Socket
+    // Highlight ring if active
+    if (this.step === 1) {
+      ctx.strokeStyle = '#ffd54f';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(this.socket.x, this.socket.y, 42 + glowPulse, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // Socket Housing
     ctx.fillStyle = '#102027';
     ctx.beginPath();
     ctx.arc(this.socket.x, this.socket.y, this.socket.r, 0, Math.PI * 2);
@@ -172,15 +258,20 @@ export class GeneratorRepair {
     ctx.fill();
 
     // Heavy Wire leading to plug
-    ctx.strokeStyle = '#d50000';
+    ctx.strokeStyle = this.cableType.wire;
     ctx.lineWidth = 8;
     ctx.beginPath();
-    ctx.moveTo(220, 500);
-    ctx.quadraticCurveTo(280, 480, this.plug.x, this.plug.y);
+    ctx.moveTo(this.cableRoot.x, this.cableRoot.y);
+    ctx.quadraticCurveTo(
+      (this.cableRoot.x + this.plug.x) / 2,
+      Math.max(this.cableRoot.y, this.plug.y) + 15,
+      this.plug.x,
+      this.plug.y
+    );
     ctx.stroke();
 
     // Plug Head
-    ctx.fillStyle = '#ff5252';
+    ctx.fillStyle = this.cableType.plug;
     ctx.beginPath();
     ctx.roundRect(this.plug.x - 16, this.plug.y - 14, 32, 28, 6);
     ctx.fill();
@@ -191,47 +282,68 @@ export class GeneratorRepair {
     ctx.fillStyle = '#cfd8dc';
     ctx.font = '13px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('Heavy Cable', 380, 430);
+    ctx.fillText(this.cableType.name, (this.socket.x + this.plug.origX) / 2, Math.max(this.socket.y, this.plug.origY) + 50);
     ctx.restore();
 
-    // STEP 2 SECTION: Breaker Switch
+    // --- COMPONENT 2: POWER BREAKER SWITCH ---
     ctx.save();
+    // Highlight ring if active
+    if (this.step === 2) {
+      ctx.strokeStyle = '#ffd54f';
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(this.breaker.x - 38 - glowPulse, this.breaker.y - 58 - glowPulse, 76 + glowPulse * 2, 116 + glowPulse * 2);
+    }
+
     ctx.fillStyle = '#37474f';
-    ctx.fillRect(610, 330, 60, 100);
+    ctx.fillRect(this.breaker.x - 30, this.breaker.y - 50, 60, 100);
     ctx.strokeStyle = '#78909c';
-    ctx.strokeRect(610, 330, 60, 100);
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(this.breaker.x - 30, this.breaker.y - 50, 60, 100);
 
     // Switch toggle
-    const toggleY = this.switchOn ? 345 : 385;
+    const toggleY = this.switchOn ? this.breaker.y - 35 : this.breaker.y + 5;
     ctx.fillStyle = this.switchOn ? '#00e676' : '#d50000';
     ctx.beginPath();
-    ctx.roundRect(620, toggleY, 40, 30, 6);
+    ctx.roundRect(this.breaker.x - 20, toggleY, 40, 30, 6);
     ctx.fill();
 
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 11px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(this.switchOn ? 'ON' : 'OFF', 640, toggleY + 18);
+    ctx.fillText(this.switchOn ? 'ON' : 'OFF', this.breaker.x, toggleY + 19);
 
     ctx.fillStyle = '#cfd8dc';
     ctx.font = '13px sans-serif';
-    ctx.fillText('Power Breaker', 640, 455);
+    ctx.fillText('Power Breaker', this.breaker.x, this.breaker.y + 70);
     ctx.restore();
 
-    // STEP 3 SECTION: Recoil Starter Pull Handle
+    // --- COMPONENT 3: RECOIL STARTER PULL HANDLE ---
     ctx.save();
+    const shakeOffsetX = this.handleShake > 0 ? (Math.random() - 0.5) * 8 * this.handleShake : 0;
+    const recoilX = this.recoil.x + shakeOffsetX;
+    const recoilY = this.recoil.y;
+
+    // Highlight ring if active
+    if (this.step === 3 && !this.completed) {
+      ctx.strokeStyle = '#ffd54f';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(recoilX, recoilY, 52 + glowPulse, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
     ctx.fillStyle = '#37474f';
     ctx.beginPath();
-    ctx.arc(820, 380, 45, 0, Math.PI * 2);
+    ctx.arc(recoilX, recoilY, 45, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = '#78909c';
     ctx.lineWidth = 3;
     ctx.stroke();
 
     // Cord handle (T-bar)
-    ctx.fillStyle = '#ff6d00';
+    ctx.fillStyle = this.completed ? '#00c853' : '#ff6d00';
     ctx.beginPath();
-    ctx.roundRect(795, 365, 50, 24, 6);
+    ctx.roundRect(recoilX - 30, recoilY - 14, 60, 28, 6);
     ctx.fill();
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 2;
@@ -240,11 +352,14 @@ export class GeneratorRepair {
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 12px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('PULL', 820, 381);
+    const pullLabel = this.completed
+      ? 'READY'
+      : (this.pullsNeeded > 1 ? `PULL (${this.pullsDone}/${this.pullsNeeded})` : 'PULL');
+    ctx.fillText(pullLabel, recoilX, recoilY + 4);
 
     ctx.fillStyle = '#cfd8dc';
     ctx.font = '13px sans-serif';
-    ctx.fillText('Starter Recoil', 820, 455);
+    ctx.fillText('Starter Recoil', recoilX, recoilY + 70);
     ctx.restore();
 
     // Completion Banner
