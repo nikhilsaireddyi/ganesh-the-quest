@@ -555,10 +555,11 @@ export class StreetScene {
     this.game.assetRegistry.draw(ctx, 'KANDIL_LANTERN', 1740, 315, 42, 85, 'gold', 1, this.game.dayNight.time);
     this.game.assetRegistry.draw(ctx, 'KANDIL_LANTERN', 1860, 315, 42, 85, 'pink', 1, this.game.dayNight.time);
 
-    // Ornate Streetlamps along walkway
+    // Ornate Streetlamps along walkway (only lit during night, twilight, or storm)
+    const isNight = this.game.dayNight.isNight();
     const streetLampX = [220, 750, 1200, 1620, 2350];
     streetLampX.forEach(lx => {
-      this.game.assetRegistry.draw(ctx, 'STREET_LAMP', lx, 540, 32, 180, 'lit', 1, this.game.dayNight.time);
+      this.game.assetRegistry.draw(ctx, 'STREET_LAMP', lx, 540, 32, 180, isNight ? 'lit' : 'unlit', 1, this.game.dayNight.time);
     });
 
     // Sacred Mandapam & Ganesha
@@ -588,18 +589,21 @@ export class StreetScene {
     // 4. Foreground Parallax Bunting & Torans
     this.game.parallax.renderForeground(ctx, this.game.camera);
 
-    // 5. Lighting Pass (Ambient darkness & warm lights)
+    // 5. Lighting Pass (Ambient darkness & warm lights - only during dark hours/night)
     this.game.lighting.clear();
-    streetLampX.forEach(lx => {
-      this.game.lighting.addLight(lx, 360, 140, 'rgba(255, 224, 130, 0.45)', 0.85);
-    });
-    if (this.mandapam.isLit) {
-      this.game.lighting.addLight(1400, 420, 260, 'rgba(255, 179, 0, 0.4)', 0.9);
+    const ambientDark = this.game.dayNight.getAmbientDarkness();
+    if (isNight || ambientDark > 0.15) {
+      streetLampX.forEach(lx => {
+        this.game.lighting.addLight(lx, 360, 95, 'rgba(255, 215, 64, 0.25)', 0.6);
+      });
+      if (this.mandapam.isLit) {
+        this.game.lighting.addLight(1400, 420, 150, 'rgba(255, 179, 0, 0.3)', 0.65);
+      }
+      if (this.generatorState === 'running') {
+        this.game.lighting.addLight(2100, 520, 75, 'rgba(0, 230, 118, 0.25)', 0.5);
+      }
     }
-    if (this.generatorState === 'running') {
-      this.game.lighting.addLight(2100, 520, 110, 'rgba(0, 230, 118, 0.3)', 0.7);
-    }
-    this.game.lighting.render(ctx, this.game.camera, this.game.dayNight.getAmbientDarkness());
+    this.game.lighting.render(ctx, this.game.camera, ambientDark);
 
     // 6. UI & HUD Overlay
     const mission = this.game.missions.getCurrentMission();

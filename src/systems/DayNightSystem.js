@@ -68,6 +68,14 @@ export class DayNightSystem {
     return dark;
   }
 
+  isNight() {
+    return this.progress >= 0.5 || this.isStorm || this.getAmbientDarkness() > 0.25;
+  }
+
+  isDay() {
+    return !this.isNight();
+  }
+
   renderSky(ctx, viewportWidth = 1280, viewportHeight = 720) {
     ctx.save();
 

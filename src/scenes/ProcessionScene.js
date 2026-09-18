@@ -206,8 +206,12 @@ export class ProcessionScene {
 
     // 5. Lighting Pass (Chariot diyas and night glow)
     this.game.lighting.clear();
-    this.game.lighting.addLight(this.chariotX, 470, 240, 'rgba(255, 215, 0, 0.45)', 0.9);
-    this.game.lighting.render(ctx, this.game.camera, this.game.dayNight.getAmbientDarkness());
+    const isNight = this.game.dayNight.isNight();
+    const ambientDark = this.game.dayNight.getAmbientDarkness();
+    if (isNight || ambientDark > 0.15) {
+      this.game.lighting.addLight(this.chariotX, 470, 160, 'rgba(255, 215, 64, 0.25)', 0.65);
+    }
+    this.game.lighting.render(ctx, this.game.camera, ambientDark);
 
     // 6. HUD / Festival Progress Overlay
     ctx.save();
