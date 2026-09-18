@@ -105,8 +105,12 @@ export class UIManager {
           return;
         }
 
-        // Click Gulal Splash Button [ 🎨 GULAL ] (x: 1130 to 1250, y: 645 to 695)
-        if (mouse.x >= 1130 && mouse.x <= 1250 && mouse.y >= 645 && mouse.y <= 695) {
+        // Click Gulal Splash Button [ 🎨 GULAL ] (x: 1010 to 1125, y: 610 to 656)
+        const isBlocked = this.game && typeof this.game.isUIBlocked === 'function'
+          ? this.game.isUIBlocked()
+          : Boolean(this.game && this.game.dialogue && this.game.dialogue.active);
+
+        if (!isBlocked && mouse.x >= 1010 && mouse.x <= 1125 && mouse.y >= 610 && mouse.y <= 656) {
           this.triggerGulal();
           return;
         }
@@ -114,8 +118,10 @@ export class UIManager {
 
       // Space key for Gulal in street / procession
       if (input.keys && input.keys['Space']) {
-        // Only if not in dialogue or minigame
-        if (this.game && !this.game.dialogue.active) {
+        const isBlocked = this.game && typeof this.game.isUIBlocked === 'function'
+          ? this.game.isUIBlocked()
+          : Boolean(this.game && this.game.dialogue && this.game.dialogue.active);
+        if (!isBlocked) {
           this.triggerGulal();
           input.keys['Space'] = false;
         }
@@ -259,19 +265,25 @@ export class UIManager {
     ctx.font = 'bold 12px sans-serif';
     ctx.fillText('🏆 BADGES', 290, 143);
 
-    // 4. Celebrate Gulal Splash Button (Bottom Right)
-    ctx.fillStyle = '#db2777';
-    ctx.beginPath();
-    ctx.roundRect(1130, 645, 120, 48, 12);
-    ctx.fill();
-    ctx.strokeStyle = '#fde047';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 14px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('🎨 GULAL', 1190, 674);
-    ctx.textAlign = 'left';
+    // 4. Celebrate Gulal Splash Button (Bottom Right - positioned safely beside touch action button, hidden when UI blocked/dialogue active)
+    const isBlocked = this.game && typeof this.game.isUIBlocked === 'function'
+      ? this.game.isUIBlocked()
+      : Boolean(this.game && this.game.dialogue && this.game.dialogue.active);
+
+    if (!isBlocked) {
+      ctx.fillStyle = '#db2777';
+      ctx.beginPath();
+      ctx.roundRect(1010, 610, 115, 46, 12);
+      ctx.fill();
+      ctx.strokeStyle = '#fde047';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('🎨 GULAL', 1067, 638);
+      ctx.textAlign = 'left';
+    }
 
     // 2. STREET MINI-MAP (Top-Center)
     const mapX = 425;

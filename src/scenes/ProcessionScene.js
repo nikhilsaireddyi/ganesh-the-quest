@@ -50,6 +50,13 @@ export class ProcessionScene {
 
   exit() {}
 
+  isMinigameActive() {
+    return Boolean(
+      (this.rhythmGame && this.rhythmGame.active) ||
+      (this.lezimDance && this.lezimDance.active)
+    );
+  }
+
   update(dt, input) {
     if (this.rhythmGame.active) {
       this.rhythmGame.update(dt, input, this.game.particles);

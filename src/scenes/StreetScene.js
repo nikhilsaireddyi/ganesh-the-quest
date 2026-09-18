@@ -626,8 +626,24 @@ export class StreetScene {
     this.game.ui.renderModals(ctx);
   }
 
+  isMinigameActive() {
+    return Boolean(
+      (this.bambooMinigame && this.bambooMinigame.active) ||
+      (this.flowerMinigame && this.flowerMinigame.active) ||
+      (this.wiringMinigame && this.wiringMinigame.active) ||
+      (this.generatorMinigame && this.generatorMinigame.active) ||
+      (this.liftMinigame && this.liftMinigame.active) ||
+      (this.modakMinigame && this.modakMinigame.active) ||
+      (this.aartiRitual && this.aartiRitual.active) ||
+      (this.stormProtection && this.stormProtection.active) ||
+      (this.lightUpCinematic && this.lightUpCinematic.active) ||
+      (this.ganeshaRevealCinematic && this.ganeshaRevealCinematic.active) ||
+      (this.powerRestorationCinematic && this.powerRestorationCinematic.active)
+    );
+  }
+
   renderDirectionArrow(ctx) {
-    if (this.game.dialogue.active) return;
+    if (this.game.dialogue.active || this.isMinigameActive()) return;
     const currentMission = this.game.missions.currentMissionId;
     let targetX = null;
     let targetName = '';
@@ -652,23 +668,27 @@ export class StreetScene {
     if (targetX !== null && Math.abs(targetX - this.player.x) > 240) {
       ctx.save();
       const isRight = targetX > this.player.x;
-      const chipX = isRight ? 1160 : 120;
-      const chipY = 140;
       const text = isRight ? `Walk Right to ${targetName} ▶` : `◀ Walk Left to ${targetName}`;
 
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+      ctx.font = 'bold 12px sans-serif';
+      const textWidth = ctx.measureText(text).width;
+      const chipW = Math.max(220, textWidth + 36);
+      const chipH = 30;
+      const chipX = 640 - chipW / 2;
+      const chipY = 76;
+
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
       ctx.beginPath();
-      ctx.roundRect(isRight ? chipX - 220 : chipX - 10, chipY - 16, 230, 32, 16);
+      ctx.roundRect(chipX, chipY, chipW, chipH, 15);
       ctx.fill();
       ctx.strokeStyle = '#ffd54f';
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
       ctx.fillStyle = '#ffd54f';
-      ctx.font = 'bold 12px sans-serif';
-      ctx.textAlign = isRight ? 'right' : 'left';
+      ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(text, isRight ? chipX - 12 : chipX + 6, chipY);
+      ctx.fillText(text, 640, chipY + chipH / 2);
       ctx.restore();
     }
   }

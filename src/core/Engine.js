@@ -127,14 +127,36 @@ export class Engine {
     this.sceneManager.update(dt, this.input);
   }
 
+  isUIBlocked() {
+    const activeKey = this.sceneManager.currentSceneKey;
+    const isGameplay = activeKey === 'street' || activeKey === 'procession';
+    if (!isGameplay) return true;
+
+    const activeScene = this.sceneManager.currentScene;
+    const isMinigame = activeScene && typeof activeScene.isMinigameActive === 'function' && activeScene.isMinigameActive();
+
+    return Boolean(
+      this.dialogue.active ||
+      this.ui.isPaused ||
+      this.ui.showSettings ||
+      this.ui.showCredits ||
+      this.wardrobe.showModal ||
+      this.achievements.showModal ||
+      this.photoMode.active ||
+      isMinigame
+    );
+  }
+
   render() {
     this.ctx.clearRect(0, 0, this.virtualWidth, this.virtualHeight);
 
     // 1. Render Active Scene
     this.sceneManager.render(this.ctx);
 
-    // 2. Render Touch Controls
-    this.input.renderTouchControls(this.ctx);
+    // 2. Render Touch Controls (only during active world gameplay, never during dialogue/modals)
+    if (!this.isUIBlocked()) {
+      this.input.renderTouchControls(this.ctx);
+    }
 
     // 3. Photo Mode Viewfinder & Flash
     this.photoMode.renderViewfinder(this.ctx);
