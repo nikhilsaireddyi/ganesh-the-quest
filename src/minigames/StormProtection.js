@@ -7,10 +7,12 @@
 import { audioManager } from '../audio/AudioManager.js';
 
 export class StormProtection {
-  constructor(onComplete) {
+  constructor(onComplete, onFail) {
     this.onComplete = onComplete;
+    this.onFail = onFail;
     this.active = false;
     this.completed = false;
+    this.failed = false;
     this.timer = 30; // 30 seconds
 
     this.hotspots = [
@@ -24,13 +26,14 @@ export class StormProtection {
   start() {
     this.active = true;
     this.completed = false;
+    this.failed = false;
     this.timer = 30;
     this.hotspots.forEach(h => h.secured = false);
     audioManager.playThunder();
   }
 
   update(dt, playerX, input, particles) {
-    if (!this.active || this.completed) return;
+    if (!this.active || this.completed || this.failed) return;
 
     this.timer -= dt;
 
@@ -58,9 +61,14 @@ export class StormProtection {
       return;
     }
 
-    // Timer expired: generous retry reset so player isn't stuck
+    // Timer expired: MANDAPAM COLLAPSED!
     if (this.timer <= 0) {
-      this.timer = 20; // reset extra time
+      this.timer = 0;
+      this.active = false;
+      this.failed = true;
+      if (this.onFail) {
+        this.onFail();
+      }
     }
   }
 
@@ -103,27 +111,34 @@ export class StormProtection {
   }
 
   renderHUD(ctx) {
-    if (!this.active || this.completed) return;
+    if (!this.active && !this.failed) return;
+    if (this.completed) return;
 
     ctx.save();
     // Storm Warning Timer HUD at Top Center
-    ctx.fillStyle = 'rgba(183, 28, 28, 0.9)';
+    ctx.fillStyle = this.failed ? 'rgba(213, 0, 0, 0.95)' : 'rgba(183, 28, 28, 0.9)';
     ctx.beginPath();
-    ctx.roundRect(490, 20, 300, 70, 12);
+    ctx.roundRect(470, 20, 340, 70, 12);
     ctx.fill();
-    ctx.strokeStyle = '#ffea00';
+    ctx.strokeStyle = this.failed ? '#ff1744' : '#ffea00';
     ctx.lineWidth = 2.5;
     ctx.stroke();
 
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 15px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('⚠️ PROTECT THE MANDAPAM!', 640, 44);
+    ctx.fillText(this.failed ? '⚡ MANDAPAM COLLAPSED!' : '⚠️ PROTECT THE MANDAPAM!', 640, 44);
 
-    const secs = Math.ceil(this.timer);
-    ctx.font = 'bold 22px monospace';
-    ctx.fillStyle = secs <= 5 ? '#ff1744' : '#ffd54f';
-    ctx.fillText(`00:${secs < 10 ? '0' : ''}${secs}`, 640, 72);
+    if (this.failed) {
+      ctx.font = 'bold 20px monospace';
+      ctx.fillStyle = '#ff8a80';
+      ctx.fillText('TIME EXPIRED: 00:00', 640, 72);
+    } else {
+      const secs = Math.ceil(this.timer);
+      ctx.font = 'bold 22px monospace';
+      ctx.fillStyle = secs <= 5 ? '#ff1744' : '#ffd54f';
+      ctx.fillText(`00:${secs < 10 ? '0' : ''}${secs}`, 640, 72);
+    }
 
     ctx.restore();
   }

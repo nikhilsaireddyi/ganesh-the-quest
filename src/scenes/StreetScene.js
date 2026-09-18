@@ -19,6 +19,7 @@ import { SynchronizedLift } from '../minigames/SynchronizedLift.js';
 import { ModakCooking } from '../minigames/ModakCooking.js';
 import { AartiRitual } from '../minigames/AartiRitual.js';
 import { achievementSystem } from '../systems/AchievementSystem.js';
+import { SaveSystem } from '../core/SaveSystem.js';
 
 import { audioManager } from '../audio/AudioManager.js';
 
@@ -87,6 +88,7 @@ export class StreetScene {
     this.lightUpCinematic = { active: false, timer: 0 };
     this.ganeshaRevealCinematic = { active: false, timer: 0, stage: 0 };
     this.powerRestorationCinematic = { active: false, timer: 0 };
+    this.mandapamCollapseCinematic = { active: false, timer: 0, shookAgain: false };
     this.dialogueCooldown = 0;
 
     this.initMiniGames();
@@ -149,11 +151,16 @@ export class StreetScene {
     });
 
     // 5. Storm Protection
-    this.stormProtection = new StormProtection(() => {
-      this.game.missions.setProgress(4); // completes STORM_PROTECT
-      achievementSystem.unlock('storm_guardian');
-      this.triggerGeneratorFailure();
-    });
+    this.stormProtection = new StormProtection(
+      () => {
+        this.game.missions.setProgress(4); // completes STORM_PROTECT
+        achievementSystem.unlock('storm_guardian');
+        this.triggerGeneratorFailure();
+      },
+      () => {
+        this.triggerMandapamCollapse();
+      }
+    );
 
     // 6. Generator Repair
     this.generatorMinigame = new GeneratorRepair(() => {
@@ -317,6 +324,11 @@ export class StreetScene {
       this.aartiRitual.update(dt, input, this.game.particles);
       return;
     }
+    if (this.mandapamCollapseCinematic.active) {
+      this.updateMandapamCollapseCinematic(dt);
+      return;
+    }
+
     if (this.stormProtection.active) {
       this.stormProtection.update(dt, this.player.x, input, this.game.particles);
     }
@@ -521,6 +533,59 @@ export class StreetScene {
     }
   }
 
+  triggerMandapamCollapse() {
+    this.mandapamCollapseCinematic.active = true;
+    this.mandapamCollapseCinematic.timer = 0;
+    this.mandapamCollapseCinematic.shookAgain = false;
+    this.player.canMove = false;
+
+    // Pan camera dramatically to the mandapam
+    this.game.camera.panTo(1400, 480, 1.35, 0.08);
+    this.game.camera.shake(35, 2.5);
+
+    // Audio SFX
+    audioManager.playThunder();
+    audioManager.playSpark();
+    audioManager.playSnap();
+
+    // Trigger mandapam entity collapse
+    this.mandapam.triggerCollapse();
+
+    // Burst initial debris & dust
+    this.game.particles.emitCollapseDust(1400, 520, 40);
+    this.game.particles.emitDebris(1400, 480, 35);
+    this.game.particles.emitLightning();
+  }
+
+  updateMandapamCollapseCinematic(dt) {
+    this.mandapamCollapseCinematic.timer += dt;
+    const t = this.mandapamCollapseCinematic.timer;
+
+    // Continuous secondary dust & debris during collapse
+    if (t < 2.2 && Math.random() < 0.45) {
+      const offsetX = (Math.random() - 0.5) * 180;
+      this.game.particles.emitCollapseDust(1400 + offsetX, 525, 6);
+      if (Math.random() < 0.3) {
+        this.game.particles.emitDebris(1400 + offsetX, 500, 4);
+        audioManager.playSnap();
+      }
+    }
+
+    if (t > 0.8 && t < 1.0 && !this.mandapamCollapseCinematic.shookAgain) {
+      this.mandapamCollapseCinematic.shookAgain = true;
+      this.game.camera.shake(25, 1.2);
+      audioManager.playThunder();
+      this.game.particles.emitSparks(1400, 460, 20);
+    }
+
+    // After 4.0 seconds, cleanly restart the game
+    if (t >= 4.0) {
+      this.mandapamCollapseCinematic.active = false;
+      SaveSystem.reset();
+      window.location.reload();
+    }
+  }
+
   // --- RENDER ---
 
   render(ctx) {
@@ -628,6 +693,11 @@ export class StreetScene {
 
     // Modals (Settings, Credits, Pause)
     this.game.ui.renderModals(ctx);
+
+    // Mandapam Collapse Dramatic Failure Overlay
+    if (this.mandapamCollapseCinematic.active) {
+      this.renderMandapamCollapseOverlay(ctx);
+    }
   }
 
   isMinigameActive() {
@@ -640,6 +710,7 @@ export class StreetScene {
       (this.modakMinigame && this.modakMinigame.active) ||
       (this.aartiRitual && this.aartiRitual.active) ||
       (this.stormProtection && this.stormProtection.active) ||
+      (this.mandapamCollapseCinematic && this.mandapamCollapseCinematic.active) ||
       (this.lightUpCinematic && this.lightUpCinematic.active) ||
       (this.ganeshaRevealCinematic && this.ganeshaRevealCinematic.active) ||
       (this.powerRestorationCinematic && this.powerRestorationCinematic.active)
@@ -763,6 +834,62 @@ export class StreetScene {
       ctx.fillText(label, targetX, py - 24);
 
       ctx.restore();
+    }
+  }
+
+  renderMandapamCollapseOverlay(ctx) {
+    const t = this.mandapamCollapseCinematic.timer;
+    const alpha = Math.min(1, t * 1.5);
+
+    ctx.save();
+    // Dramatic red storm vignette
+    const vigGrad = ctx.createRadialGradient(640, 360, 200, 640, 360, 640);
+    vigGrad.addColorStop(0, 'rgba(183, 28, 28, 0)');
+    vigGrad.addColorStop(1, `rgba(183, 28, 28, ${Math.min(0.7, t * 0.35)})`);
+    ctx.fillStyle = vigGrad;
+    ctx.fillRect(0, 0, 1280, 720);
+
+    ctx.globalAlpha = alpha;
+    // Dark Red Card
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
+    ctx.beginPath();
+    ctx.roundRect(330, 240, 620, 190, 16);
+    ctx.fill();
+    ctx.strokeStyle = '#ff1744';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // Red alert banner header
+    ctx.fillStyle = '#b71c1c';
+    ctx.beginPath();
+    ctx.roundRect(330, 240, 620, 52, [16, 16, 0, 0]);
+    ctx.fill();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 22px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('⚡ MANDAPAM HAS COLLAPSED! ⚡', 640, 275);
+
+    ctx.fillStyle = '#ffd54f';
+    ctx.font = '16px sans-serif';
+    ctx.fillText('The fierce squall broke the bamboo supports and tore the canopy!', 640, 330);
+
+    ctx.fillStyle = '#cfd8dc';
+    ctx.font = '14px sans-serif';
+    ctx.fillText('The festival cannot continue without Lord Ganesha\'s pandal.', 640, 360);
+
+    const countdown = Math.max(1, Math.ceil(4.0 - t));
+    ctx.fillStyle = '#ff8a80';
+    ctx.font = 'bold 16px monospace';
+    ctx.fillText(`Restarting quest in ${countdown}...`, 640, 400);
+
+    ctx.restore();
+
+    // Fade to black in final 0.8s
+    if (t > 3.2) {
+      const fade = (t - 3.2) / 0.8;
+      ctx.fillStyle = `rgba(0, 0, 0, ${Math.min(1, fade)})`;
+      ctx.fillRect(0, 0, 1280, 720);
     }
   }
 }

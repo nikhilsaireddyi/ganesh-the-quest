@@ -43,6 +43,13 @@ export class ParticleSystem {
         p.vx *= 0.94;
         p.vy *= 0.94;
         p.size += dt * 14; // expand like a puff of smoke
+      } else if (p.type === 'dust') {
+        p.vx *= 0.92;
+        p.vy *= 0.92;
+        p.size += dt * 15; // expanding dust cloud
+      } else if (p.type === 'debris') {
+        p.angle += p.vAngle * dt;
+        p.vx *= 0.98;
       }
     }
   }
@@ -99,6 +106,16 @@ export class ParticleSystem {
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();
+      } else if (p.type === 'dust') {
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (p.type === 'debris') {
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.angle);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
       }
 
       ctx.restore();
@@ -246,6 +263,50 @@ export class ParticleSystem {
         life: 1.2 + Math.random() * 1.0,
         maxLife: 2.2,
         alpha: 0.85
+      });
+    }
+  }
+
+  emitCollapseDust(x, y, count = 25) {
+    const dustColors = ['#8d6e63', '#a1887f', '#bcaaa4', '#d7ccc8', '#795548'];
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 20 + Math.random() * 110;
+      this.particles.push({
+        type: 'dust',
+        x: x + (Math.random() - 0.5) * 180,
+        y: y + (Math.random() - 0.5) * 40,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed * 0.4 - 25,
+        size: 9 + Math.random() * 16,
+        color: dustColors[Math.floor(Math.random() * dustColors.length)],
+        life: 1.2 + Math.random() * 1.2,
+        maxLife: 2.4,
+        alpha: 0.82
+      });
+    }
+  }
+
+  emitDebris(x, y, count = 20) {
+    const debrisColors = ['#6d4c41', '#8d6e63', '#b71c1c', '#ff8f00', '#ffd54f'];
+    for (let i = 0; i < count; i++) {
+      const angle = -Math.PI * 0.1 - Math.random() * Math.PI * 0.8;
+      const speed = 70 + Math.random() * 190;
+      this.particles.push({
+        type: 'debris',
+        x: x + (Math.random() - 0.5) * 140,
+        y: y + (Math.random() - 0.5) * 60,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        gravity: 380,
+        angle: Math.random() * Math.PI * 2,
+        vAngle: (Math.random() - 0.5) * 12,
+        w: 6 + Math.random() * 14,
+        h: 3 + Math.random() * 6,
+        color: debrisColors[Math.floor(Math.random() * debrisColors.length)],
+        life: 1.0 + Math.random() * 0.8,
+        maxLife: 1.8,
+        alpha: 1.0
       });
     }
   }
