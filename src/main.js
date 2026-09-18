@@ -8,6 +8,7 @@ import { audioManager } from './audio/AudioManager.js';
 window.addEventListener('DOMContentLoaded', () => {
   const canvas = document.getElementById('gameCanvas');
   const engine = new Engine(canvas);
+  window.__engine = engine;
 
   // Audio unlock banner interaction
   const audioBanner = document.getElementById('audio-banner');
