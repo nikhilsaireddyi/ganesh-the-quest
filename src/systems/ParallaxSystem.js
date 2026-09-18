@@ -69,23 +69,23 @@ export class ParallaxSystem {
   renderGround(ctx, camera) {
     // Street Road / Paved Stone Walkway (In world coordinates)
     ctx.save();
-    // Warm festive stone pavers
+    // Warm festive stone pavers - deep fill to completely cover bottom of screen
     ctx.fillStyle = '#efebe9';
-    ctx.fillRect(-200, 520, this.streetLength + 400, 220);
+    ctx.fillRect(-500, 520, this.streetLength + 1000, 700);
 
     // Stone pattern lines
     ctx.strokeStyle = '#d7ccc8';
     ctx.lineWidth = 2;
-    for (let x = -200; x < this.streetLength + 400; x += 60) {
+    for (let x = -500; x < this.streetLength + 1000; x += 60) {
       ctx.beginPath();
       ctx.moveTo(x, 520);
-      ctx.lineTo(x, 740);
+      ctx.lineTo(x, 1200);
       ctx.stroke();
     }
 
     // Street Curb / Edge
     ctx.fillStyle = '#bcaaa4';
-    ctx.fillRect(-200, 515, this.streetLength + 400, 8);
+    ctx.fillRect(-500, 515, this.streetLength + 1000, 8);
     ctx.restore();
   }
 

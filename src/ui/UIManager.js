@@ -105,12 +105,18 @@ export class UIManager {
           return;
         }
 
-        // Click Gulal Splash Button [ 🎨 GULAL ] (x: 1010 to 1125, y: 610 to 656)
+        // Click Gulal Splash Button [ 🎨 GULAL ]
         const isBlocked = this.game && typeof this.game.isUIBlocked === 'function'
           ? this.game.isUIBlocked()
           : Boolean(this.game && this.game.dialogue && this.game.dialogue.active);
 
-        if (!isBlocked && mouse.x >= 1010 && mouse.x <= 1125 && mouse.y >= 610 && mouse.y <= 656) {
+        const isMobile = Boolean(this.game && this.game.input && this.game.input.isMobile);
+        const gx = isMobile ? 1010 : 1130;
+        const gy = isMobile ? 610 : 640;
+        const gw = isMobile ? 115 : 120;
+        const gh = isMobile ? 46 : 48;
+
+        if (!isBlocked && mouse.x >= gx && mouse.x <= gx + gw && mouse.y >= gy && mouse.y <= gy + gh) {
           this.triggerGulal();
           return;
         }
@@ -265,23 +271,29 @@ export class UIManager {
     ctx.font = 'bold 12px sans-serif';
     ctx.fillText('🏆 BADGES', 290, 143);
 
-    // 4. Celebrate Gulal Splash Button (Bottom Right - positioned safely beside touch action button, hidden when UI blocked/dialogue active)
+    // 4. Celebrate Gulal Splash Button (Bottom Right - adapt to mobile vs PC layout)
     const isBlocked = this.game && typeof this.game.isUIBlocked === 'function'
       ? this.game.isUIBlocked()
       : Boolean(this.game && this.game.dialogue && this.game.dialogue.active);
 
+    const isMobile = Boolean(this.game && this.game.input && this.game.input.isMobile);
+    const gx = isMobile ? 1010 : 1130;
+    const gy = isMobile ? 610 : 640;
+    const gw = isMobile ? 115 : 120;
+    const gh = isMobile ? 46 : 48;
+
     if (!isBlocked) {
       ctx.fillStyle = '#db2777';
       ctx.beginPath();
-      ctx.roundRect(1010, 610, 115, 46, 12);
+      ctx.roundRect(gx, gy, gw, gh, 12);
       ctx.fill();
       ctx.strokeStyle = '#fde047';
       ctx.lineWidth = 2;
       ctx.stroke();
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 14px sans-serif';
+      ctx.font = 'bold 13px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('🎨 GULAL', 1067, 638);
+      ctx.fillText(isMobile ? '🎨 GULAL' : '🎨 GULAL [Space]', gx + gw / 2, gy + gh / 2 + 5);
       ctx.textAlign = 'left';
     }
 

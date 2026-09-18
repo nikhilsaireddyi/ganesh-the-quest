@@ -33,20 +33,22 @@ html, body {
   position: relative;
   width: 100vw;
   height: 100vh;
-  max-width: 177.78vh; /* 16:9 aspect ratio */
-  max-height: 56.25vw;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #000000;
-  box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 179, 0, 0.15);
+  background: var(--color-deep-night);
+  overflow: hidden;
 }
 
 canvas#gameCanvas {
   width: 100%;
   height: 100%;
+  max-width: 177.78vh; /* 16:9 aspect ratio */
+  max-height: 56.25vw;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
   display: block;
-  image-rendering: auto;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 179, 0, 0.15);
 }
 
 /* Audio unlock splash hint */
