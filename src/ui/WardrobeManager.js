@@ -89,10 +89,10 @@ export class WardrobeManager {
         return;
       }
 
-      // Check Kurta Color Circles (row 0 at cy: 158, row 1 at cy: 212)
+      // Check Kurta Color Circles (row 0 at cy: 152, row 1 at cy: 206)
       KURTA_COLORS.forEach((color, i) => {
-        const cx = 575 + (i % 3) * 115;
-        const cy = 158 + Math.floor(i / 3) * 54;
+        const cx = 630 + (i % 3) * 120;
+        const cy = 152 + Math.floor(i / 3) * 54;
         const dist = Math.hypot(mx - cx, my - cy);
         if (dist <= 24) {
           this.kurtaColor = color.hex;
@@ -102,11 +102,11 @@ export class WardrobeManager {
         }
       });
 
-      // Check Headwear Options (row 0 at hy: 298, row 1 at hy: 340)
+      // Check Headwear Options (row 0 at hy: 306, row 1 at hy: 350)
       HEADWEAR_STYLES.forEach((hw, i) => {
-        const hx = 540 + (i % 2) * 185;
-        const hy = 298 + Math.floor(i / 2) * 42;
-        if (mx >= hx && mx <= hx + 175 && my >= hy && my <= hy + 34) {
+        const hx = 560 + (i % 2) * 200;
+        const hy = 306 + Math.floor(i / 2) * 44;
+        if (mx >= hx && mx <= hx + 180 && my >= hy && my <= hy + 34) {
           this.headwear = hw.id;
           this.save();
           audioManager.playSnap();
@@ -114,11 +114,11 @@ export class WardrobeManager {
         }
       });
 
-      // Check Tilak Options (ty: 435)
+      // Check Tilak Options (ty: 444)
       TILAK_STYLES.forEach((tk, i) => {
-        const tx = 540 + i * 125;
-        const ty = 435;
-        if (mx >= tx && mx <= tx + 118 && my >= ty && my <= ty + 36) {
+        const tx = 555 + i * 135;
+        const ty = 444;
+        if (mx >= tx && mx <= tx + 120 && my >= ty && my <= ty + 36) {
           this.tilak = tk.id;
           this.save();
           audioManager.playSnap();
@@ -126,8 +126,8 @@ export class WardrobeManager {
         }
       });
 
-      // Done / Confirm Button (y: 520 to 568, x: 620 to 840)
-      if (mx >= 620 && mx <= 840 && my >= 520 && my <= 568) {
+      // Done / Confirm Button (y: 520 to 566, x: 635 to 865)
+      if (mx >= 635 && mx <= 865 && my >= 520 && my <= 566) {
         this.showModal = false;
         audioManager.playSuccess();
         mouse.justPressed = false;
@@ -190,17 +190,18 @@ export class WardrobeManager {
     // Draw Live Hero Preview in center of preview panel
     this.renderHeroPreview(ctx, bx + 127, by + 460);
 
-    // --- RIGHT CUSTOMIZATION OPTIONS ---
+    // --- RIGHT CUSTOMIZATION OPTIONS (Centered at x = 750) ---
+    const paneCenterX = 750;
 
     // 1. Kurta Silk Color
-    ctx.textAlign = 'left';
+    ctx.textAlign = 'center';
     ctx.fillStyle = '#ffd54f';
     ctx.font = 'bold 15px sans-serif';
-    ctx.fillText('1. Silk Kurta Color', 540, 128);
+    ctx.fillText('1. Silk Kurta Color', paneCenterX, 122);
 
     KURTA_COLORS.forEach((c, i) => {
-      const cx = 575 + (i % 3) * 115;
-      const cy = 158 + Math.floor(i / 3) * 54;
+      const cx = 630 + (i % 3) * 120;
+      const cy = 152 + Math.floor(i / 3) * 54;
       const isSelected = this.kurtaColor === c.hex;
 
       // Color circle
@@ -227,20 +228,20 @@ export class WardrobeManager {
       ctx.fillText(c.name.split(' ')[1] || c.name, cx, cy + 28);
     });
 
-    // 2. Traditional Headwear (Pheta)
-    ctx.textAlign = 'left';
+    // 2. Traditional Headwear (Pheta) - Dragged down & centered
+    ctx.textAlign = 'center';
     ctx.fillStyle = '#ffd54f';
     ctx.font = 'bold 15px sans-serif';
-    ctx.fillText('2. Traditional Headwear & Pheta', 540, 278);
+    ctx.fillText('2. Traditional Headwear & Pheta', paneCenterX, 284);
 
     HEADWEAR_STYLES.forEach((hw, i) => {
-      const hx = 540 + (i % 2) * 185;
-      const hy = 298 + Math.floor(i / 2) * 42;
+      const hx = 560 + (i % 2) * 200;
+      const hy = 306 + Math.floor(i / 2) * 44;
       const isSelected = this.headwear === hw.id;
 
       ctx.fillStyle = isSelected ? '#e65100' : '#1e293b';
       ctx.beginPath();
-      ctx.roundRect(hx, hy, 175, 34, 8);
+      ctx.roundRect(hx, hy, 180, 34, 8);
       ctx.fill();
 
       ctx.strokeStyle = isSelected ? '#ffd700' : '#475569';
@@ -250,23 +251,23 @@ export class WardrobeManager {
       ctx.fillStyle = isSelected ? '#ffffff' : '#cbd5e1';
       ctx.font = 'bold 12px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(hw.name, hx + 87, hy + 22);
+      ctx.fillText(hw.name, hx + 90, hy + 22);
     });
 
-    // 3. Sacred Tilak Mark (with generous 41px clearance above)
-    ctx.textAlign = 'left';
+    // 3. Sacred Tilak Mark - Dragged down & centered
+    ctx.textAlign = 'center';
     ctx.fillStyle = '#ffd54f';
     ctx.font = 'bold 15px sans-serif';
-    ctx.fillText('3. Sacred Tilak Mark', 540, 415);
+    ctx.fillText('3. Sacred Tilak Mark', paneCenterX, 422);
 
     TILAK_STYLES.forEach((tk, i) => {
-      const tx = 540 + i * 125;
-      const ty = 435;
+      const tx = 555 + i * 135;
+      const ty = 444;
       const isSelected = this.tilak === tk.id;
 
       ctx.fillStyle = isSelected ? '#c2410c' : '#1e293b';
       ctx.beginPath();
-      ctx.roundRect(tx, ty, 118, 36, 8);
+      ctx.roundRect(tx, ty, 120, 36, 8);
       ctx.fill();
 
       ctx.strokeStyle = isSelected ? '#ffd700' : '#475569';
@@ -276,13 +277,13 @@ export class WardrobeManager {
       ctx.fillStyle = isSelected ? '#ffffff' : '#cbd5e1';
       ctx.font = 'bold 11px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(tk.name, tx + 59, ty + 23);
+      ctx.fillText(tk.name, tx + 60, ty + 23);
     });
 
-    // CONFIRM BUTTON (with clean clearance)
+    // CONFIRM BUTTON - Centered
     ctx.fillStyle = '#16a34a';
     ctx.beginPath();
-    ctx.roundRect(620, 520, 220, 48, 10);
+    ctx.roundRect(635, 520, 230, 46, 10);
     ctx.fill();
     ctx.strokeStyle = '#86efac';
     ctx.lineWidth = 2;
@@ -291,7 +292,7 @@ export class WardrobeManager {
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 16px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('SAVE & WEAR ✓', 730, 550);
+    ctx.fillText('SAVE & WEAR ✓', paneCenterX, 549);
 
     ctx.restore();
   }
