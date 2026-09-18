@@ -36,8 +36,16 @@ export class ElectricalWiring {
     this.active = true;
     this.completed = false;
     this.completionTimer = 0;
+    this.activeDrag = null;
     this.leftTerminals.forEach(t => t.connectedTo = null);
     this.rightTerminals.forEach(t => t.powered = false);
+
+    // Randomize right fixture positions so the puzzle is fresh every time
+    const ys = [240, 330, 420, 510];
+    const shuffledYs = [...ys].sort(() => Math.random() - 0.5);
+    this.rightTerminals.forEach((rt, idx) => {
+      rt.y = shuffledYs[idx];
+    });
   }
 
   update(dt, input, particles) {
