@@ -10,7 +10,10 @@ export class ParallaxSystem {
   }
 
   renderBackground(ctx, camera) {
-    const camX = camera.x;
+    const camX = camera.x || 0;
+    // Parallax vertical adjustment for PC vs Mobile floor positioning
+    const camY = (camera && camera.y !== undefined) ? camera.y : (camera && camera.isMobile ? 500 : 410);
+    const yShift = (500 - camY) * 0.7;
 
     // LAYER 1: Distant City & Temple Silhouettes (Speed: 0.15)
     ctx.save();
@@ -21,15 +24,15 @@ export class ParallaxSystem {
     for (let x = -800 + layer1Offset; x < camera.viewportWidth + 800; x += 380) {
       // Temple Shikhara silhouette
       ctx.beginPath();
-      ctx.moveTo(x, 500);
-      ctx.lineTo(x + 70, 320);
-      ctx.lineTo(x + 140, 500);
+      ctx.moveTo(x, 500 + yShift * 0.4);
+      ctx.lineTo(x + 70, 320 + yShift * 0.4);
+      ctx.lineTo(x + 140, 500 + yShift * 0.4);
       ctx.fill();
 
       // Flat roof building silhouettes with domes
-      ctx.fillRect(x + 140, 380, 160, 120);
+      ctx.fillRect(x + 140, 380 + yShift * 0.4, 160, 120);
       ctx.beginPath();
-      ctx.arc(x + 220, 380, 30, Math.PI, 0);
+      ctx.arc(x + 220, 380 + yShift * 0.4, 30, Math.PI, 0);
       ctx.fill();
     }
     ctx.restore();
@@ -41,25 +44,25 @@ export class ParallaxSystem {
     ctx.globalAlpha = 0.65;
 
     for (let x = -900 + layer2Offset; x < camera.viewportWidth + 900; x += 450) {
-      // Houses
-      ctx.fillRect(x, 390, 240, 150);
+      // Houses (extended downwards so no gap ever appears above the street road)
+      ctx.fillRect(x, 390 + yShift * 0.8, 240, 260);
 
       // Pitched clay roof
       ctx.fillStyle = '#d84315';
       ctx.beginPath();
-      ctx.moveTo(x - 20, 390);
-      ctx.lineTo(x + 120, 320);
-      ctx.lineTo(x + 260, 390);
+      ctx.moveTo(x - 20, 390 + yShift * 0.8);
+      ctx.lineTo(x + 120, 320 + yShift * 0.8);
+      ctx.lineTo(x + 260, 390 + yShift * 0.8);
       ctx.closePath();
       ctx.fill();
 
       // Festive banyan/neem tree
       ctx.fillStyle = '#2e7d32';
       ctx.beginPath();
-      ctx.arc(x + 360, 410, 60, 0, Math.PI * 2);
+      ctx.arc(x + 360, 410 + yShift * 0.8, 60, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = '#4e342e';
-      ctx.fillRect(x + 350, 450, 20, 90);
+      ctx.fillRect(x + 350, 450 + yShift * 0.8, 20, 120);
 
       ctx.fillStyle = '#795548';
     }
@@ -67,25 +70,91 @@ export class ParallaxSystem {
   }
 
   renderGround(ctx, camera) {
-    // Street Road / Paved Stone Walkway (In world coordinates)
+    // Authentic Festive Street Road (In world coordinates)
     ctx.save();
-    // Warm festive stone pavers - deep fill to completely cover bottom of screen
-    ctx.fillStyle = '#efebe9';
-    ctx.fillRect(-500, 520, this.streetLength + 1000, 700);
 
-    // Stone pattern lines
-    ctx.strokeStyle = '#d7ccc8';
-    ctx.lineWidth = 2;
-    for (let x = -500; x < this.streetLength + 1000; x += 60) {
+    const startX = -600;
+    const endX = this.streetLength + 1000;
+    const totalW = endX - startX;
+
+    // 1. Sidewalk / Pedestrian Walkway (y: 515 - 540)
+    // Warm Indian sandstone pavement where houses & streetlamps stand
+    ctx.fillStyle = '#cfc5bb';
+    ctx.fillRect(startX, 515, totalW, 25);
+
+    // Subtle paving slab joints along walkway
+    ctx.strokeStyle = '#b8aca1';
+    ctx.lineWidth = 1.5;
+    for (let x = startX; x < endX; x += 55) {
       ctx.beginPath();
-      ctx.moveTo(x, 520);
-      ctx.lineTo(x, 1200);
+      ctx.moveTo(x, 515);
+      ctx.lineTo(x, 538);
       ctx.stroke();
     }
 
-    // Street Curb / Edge
-    ctx.fillStyle = '#bcaaa4';
-    ctx.fillRect(-500, 515, this.streetLength + 1000, 8);
+    // 2. Street Kerbstone (y: 538 - 546)
+    // Classic festive yellow-and-black painted kerbstones
+    const kerbW = 42;
+    for (let x = startX; x < endX; x += kerbW) {
+      const idx = Math.floor(Math.abs(x) / kerbW);
+      ctx.fillStyle = idx % 2 === 0 ? '#ffb300' : '#1e293b';
+      ctx.fillRect(x, 538, kerbW + 0.5, 8);
+
+      // 3D Kerb Top highlight bevel
+      ctx.fillStyle = idx % 2 === 0 ? '#fff59d' : '#475569';
+      ctx.fillRect(x, 538, kerbW + 0.5, 1.5);
+    }
+
+    // Drop shadow under kerb onto asphalt road
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+    ctx.fillRect(startX, 546, totalW, 4);
+
+    // 3. Main Asphalt Roadway Surface (y: 546 - 1200)
+    // Rich dark tar / macadam asphalt road gradient
+    const roadGrad = ctx.createLinearGradient(0, 546, 0, 950);
+    roadGrad.addColorStop(0, '#2d3239');
+    roadGrad.addColorStop(0.12, '#24272e');
+    roadGrad.addColorStop(1, '#181a1f');
+    ctx.fillStyle = roadGrad;
+    ctx.fillRect(startX, 546, totalW, 700);
+
+    // Subtle asphalt grain speckles (deterministic, non-flickering)
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+    for (let x = startX; x < endX; x += 28) {
+      const hash = ((x * 13) ^ 0x5deece66d) & 0x7fffffff;
+      const offY1 = 555 + (hash % 160);
+      const offY2 = 610 + ((hash >> 4) % 180);
+      ctx.fillRect(x, offY1, 3, 2);
+      ctx.fillRect(x + 14, offY2, 4, 2);
+    }
+
+    // 4. Road Markings
+    // Continuous white road shoulder edge stripe
+    ctx.fillStyle = 'rgba(241, 245, 249, 0.55)';
+    ctx.fillRect(startX, 558, totalW, 3);
+
+    // Festive Center Dashed Road Divider Line (y: 636)
+    ctx.save();
+    ctx.strokeStyle = '#fef08a';
+    ctx.lineWidth = 5;
+    ctx.setLineDash([70, 50]);
+    ctx.beginPath();
+    ctx.moveTo(startX, 636);
+    ctx.lineTo(endX, 636);
+    ctx.stroke();
+    ctx.restore();
+
+    // Secondary lower guideline stripe (y: 715)
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([40, 45]);
+    ctx.beginPath();
+    ctx.moveTo(startX, 715);
+    ctx.lineTo(endX, 715);
+    ctx.stroke();
+    ctx.restore();
+
     ctx.restore();
   }
 

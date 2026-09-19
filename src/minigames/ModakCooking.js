@@ -55,16 +55,29 @@ export class ModakCooking {
   update(dt, input, particles) {
     if (!this.active) return;
 
+    const mouse = input && input.mouse;
+
+    // Close button [X] (x: 1005, y: 75 with generous touch padding)
+    if (mouse && mouse.justPressed && mouse.x >= 980 && mouse.x <= 1060 && mouse.y >= 55 && mouse.y <= 125) {
+      this.active = false;
+      audioManager.playSnap();
+      mouse.justPressed = false;
+      if (this.completed && this.onComplete) {
+        this.onComplete();
+      }
+      return;
+    }
+
     if (this.completed) {
       this.completionTimer += dt;
-      if (this.completionTimer > 2.0) {
+      if (this.completionTimer > 1.2 || (mouse && mouse.justPressed) || (input && input.interactPressed)) {
+        if (mouse) mouse.justPressed = false;
+        if (input) input.interactPressed = false;
         this.active = false;
         if (this.onComplete) this.onComplete();
       }
       return;
     }
-
-    const mouse = input.mouse;
 
     if (this.stage === 0) {
       // Stage 0: Roll dough with rolling pin
@@ -164,6 +177,20 @@ export class ModakCooking {
     ctx.strokeStyle = '#ff8f00';
     ctx.lineWidth = 1.5;
     ctx.strokeRect(228, 68, 824, 584);
+
+    // Close Button [X]
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.roundRect(1005, 75, 40, 36, 8);
+    ctx.fill();
+    ctx.strokeStyle = '#ffd54f';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✕', 1025, 99);
 
     // Title & Instructions
     ctx.fillStyle = '#ffd54f';

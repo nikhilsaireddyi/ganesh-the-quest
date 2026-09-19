@@ -82,7 +82,7 @@ export class WardrobeManager {
       const bh = 600;
 
       // Check click outside to close or close button [X] at top-right
-      if (mx < bx || mx > bx + bw || my < by || my > by + bh || (mx > bx + bw - 50 && mx < bx + bw - 15 && my > by + 15 && my < by + 55)) {
+      if (mx < bx || mx > bx + bw || my < by || my > by + bh || (mx >= bx + bw - 60 && mx <= bx + bw - 10 && my >= by + 12 && my <= by + 56)) {
         this.showModal = false;
         audioManager.playSnap();
         mouse.justPressed = false;
@@ -169,10 +169,21 @@ export class WardrobeManager {
     ctx.textAlign = 'center';
     ctx.fillText('👕 HERO FESTIVAL WARDROBE', bx + bw / 2, by + 38);
 
-    // Close button (X)
-    ctx.fillStyle = '#ff7043';
-    ctx.font = 'bold 22px sans-serif';
-    ctx.fillText('✕', bx + bw - 32, by + 38);
+    // Close button [X]
+    const btnX = bx + bw - 55;
+    const btnY = by + 16;
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.roundRect(btnX, btnY, 40, 36, 8);
+    ctx.fill();
+    ctx.strokeStyle = '#ffd54f';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✕', btnX + 20, btnY + 24);
 
     // --- LEFT PREVIEW PANEL ---
     ctx.fillStyle = '#1e293b';
@@ -355,39 +366,6 @@ export class WardrobeManager {
     ctx.arc(0, -124, 13, 0, Math.PI * 2);
     ctx.fill();
 
-    // Tilak
-    if (tilak === 'trident') {
-      ctx.strokeStyle = '#ffd700';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(-3, -129);
-      ctx.lineTo(0, -124);
-      ctx.lineTo(3, -129);
-      ctx.stroke();
-      ctx.fillStyle = '#c62828';
-      ctx.beginPath();
-      ctx.arc(0, -125, 1.2, 0, Math.PI * 2);
-      ctx.fill();
-    } else if (tilak === 'bindu') {
-      ctx.fillStyle = '#c62828';
-      ctx.beginPath();
-      ctx.arc(0, -126, 2, 0, Math.PI * 2);
-      ctx.fill();
-    } else if (tilak === 'vibhuti') {
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.moveTo(-4, -127);
-      ctx.lineTo(4, -127);
-      ctx.moveTo(-4, -125);
-      ctx.lineTo(4, -125);
-      ctx.stroke();
-      ctx.fillStyle = '#c62828';
-      ctx.beginPath();
-      ctx.arc(0, -126, 1.2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
     // Headwear
     if (hw === 'none') {
       // Styled festive dark hair
@@ -400,7 +378,7 @@ export class WardrobeManager {
       const phetaColor = hw === 'pheta_crimson' ? '#b71c1c' : (hw === 'pheta_gold' ? '#f59e0b' : '#ea580c');
       ctx.fillStyle = phetaColor;
       ctx.beginPath();
-      ctx.roundRect(-15, -142, 30, 16, [8, 8, 2, 2]);
+      ctx.roundRect(-15, -142, 30, 15, [8, 8, 2, 2]);
       ctx.fill();
 
       // Golden Zari Border band
@@ -420,6 +398,36 @@ export class WardrobeManager {
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
       ctx.arc(8, -145, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Sacred Tilak (Drawn over forehead and lower band so it is clearly visible in preview)
+    if (tilak === 'trident') {
+      ctx.fillStyle = '#ffd700';
+      ctx.fillRect(-5, -128, 10, 3);
+      ctx.fillStyle = '#c62828';
+      ctx.fillRect(-1.5, -131, 3, 8);
+    } else if (tilak === 'bindu') {
+      ctx.fillStyle = '#c62828';
+      ctx.beginPath();
+      ctx.arc(0, -126, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffd700';
+      ctx.beginPath();
+      ctx.arc(0, -126, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (tilak === 'vibhuti') {
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(-6, -128);
+      ctx.lineTo(6, -128);
+      ctx.moveTo(-6, -125);
+      ctx.lineTo(6, -125);
+      ctx.stroke();
+      ctx.fillStyle = '#c62828';
+      ctx.beginPath();
+      ctx.arc(0, -126.5, 1.8, 0, Math.PI * 2);
       ctx.fill();
     }
 

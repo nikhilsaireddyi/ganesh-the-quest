@@ -20,7 +20,8 @@ export class SaveSystem {
       completedMissions: [],
       musicVolume: 0.6,
       sfxVolume: 0.8,
-      isMuted: false
+      isMuted: false,
+      backgroundBells: true
     };
   }
 

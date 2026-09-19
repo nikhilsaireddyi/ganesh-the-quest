@@ -51,9 +51,24 @@ export class DholRhythmGame {
   update(dt, input, particles) {
     if (!this.active) return;
 
+    const mouse = input && input.mouse;
+
+    // Close button [X] (x: 805, y: 115 with generous touch padding)
+    if (mouse && mouse.justPressed && mouse.x >= 780 && mouse.x <= 860 && mouse.y >= 95 && mouse.y <= 165) {
+      this.active = false;
+      audioManager.playSnap();
+      mouse.justPressed = false;
+      if (this.completed && this.onComplete) {
+        this.onComplete();
+      }
+      return;
+    }
+
     if (this.completed) {
       this.completionTimer += dt;
-      if (this.completionTimer > 2.0) {
+      if (this.completionTimer > 1.2 || (mouse && mouse.justPressed) || (input && input.interactPressed)) {
+        if (mouse) mouse.justPressed = false;
+        if (input) input.interactPressed = false;
         this.active = false;
         if (this.onComplete) this.onComplete();
       }
@@ -95,7 +110,6 @@ export class DholRhythmGame {
     }
 
     // Lane hit inputs
-    const mouse = input.mouse;
     this.lanes.forEach((lane, idx) => {
       const keyTriggered = input.keys[lane.key] || false;
       const mouseTriggered = mouse.justPressed && Math.abs(mouse.x - lane.x) < 45 && Math.abs(mouse.y - this.hitY) < 55;
@@ -166,6 +180,20 @@ export class DholRhythmGame {
     ctx.strokeStyle = '#ff8f00';
     ctx.lineWidth = 3;
     ctx.stroke();
+
+    // Close Button [X]
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.roundRect(trackX + trackW - 55, 115, 40, 36, 8);
+    ctx.fill();
+    ctx.strokeStyle = '#ffd54f';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✕', trackX + trackW - 35, 139);
 
     // Title & Instructions
     ctx.fillStyle = '#ffd54f';

@@ -21,8 +21,10 @@ export class UIManager {
     this.musicVol = save.musicVolume ?? 0.6;
     this.sfxVol = save.sfxVolume ?? 0.8;
     this.isMuted = save.isMuted ?? false;
+    this.backgroundBells = save.backgroundBells ?? true;
     audioManager.setVolume(this.sfxVol, this.musicVol);
     audioManager.setMute(this.isMuted);
+    audioManager.setBackgroundBells(this.backgroundBells);
   }
 
   togglePause() {
@@ -109,18 +111,22 @@ export class UIManager {
           return;
         }
 
-        // Click Gulal Splash Button [ 🎨 GULAL ]
+        // Click / Touch Gulal Splash Button [ 🎨 GULAL ]
         const isBlocked = this.game && typeof this.game.isUIBlocked === 'function'
           ? this.game.isUIBlocked()
           : Boolean(this.game && this.game.dialogue && this.game.dialogue.active);
 
         const isMobile = Boolean(this.game && this.game.input && this.game.input.isMobile);
-        const gx = isMobile ? 1010 : 1130;
-        const gy = isMobile ? 610 : 640;
-        const gw = isMobile ? 115 : 120;
-        const gh = isMobile ? 46 : 48;
+        const layout = this.game && this.game.input && typeof this.game.input.getButtonLayout === 'function'
+          ? this.game.input.getButtonLayout()
+          : null;
+        const gx = isMobile && layout ? layout.gulal.x : (isMobile ? 940 : 1130);
+        const gy = isMobile && layout ? layout.gulal.y : (isMobile ? 614 : 640);
+        const gw = isMobile && layout ? layout.gulal.w : (isMobile ? 128 : 120);
+        const gh = isMobile && layout ? layout.gulal.h : (isMobile ? 54 : 48);
 
-        if (!isBlocked && mouse.x >= gx && mouse.x <= gx + gw && mouse.y >= gy && mouse.y <= gy + gh) {
+        if (!isBlocked && (input.gulalPressed || (mouse.x >= gx && mouse.x <= gx + gw && mouse.y >= gy && mouse.y <= gy + gh))) {
+          input.gulalPressed = false;
           this.triggerGulal();
           return;
         }
@@ -155,6 +161,13 @@ export class UIManager {
   }
 
   handlePauseClick(mx, my) {
+    // Close button [X] at top-right
+    if (mx >= 760 && mx <= 810 && my >= 190 && my <= 235) {
+      this.isPaused = false;
+      audioManager.playSnap();
+      return;
+    }
+
     // Resume (x: 520 to 760, y: 280 to 330)
     if (mx >= 520 && mx <= 760 && my >= 280 && my <= 330) {
       this.isPaused = false;
@@ -176,37 +189,46 @@ export class UIManager {
     const mx = mouse.x;
     const my = mouse.y;
 
-    // Close button [X] (x: 820 to 880, y: 150 to 195)
-    if (mouse.justPressed && mx >= 820 && mx <= 880 && my >= 150 && my <= 195) {
+    // Close button [X] (x: 835 to 895, y: 140 to 195)
+    if (mouse.justPressed && mx >= 835 && mx <= 895 && my >= 140 && my <= 195) {
       this.showSettings = false;
-      SaveSystem.save({ musicVolume: this.musicVol, sfxVolume: this.sfxVol, isMuted: this.isMuted });
+      SaveSystem.save({ musicVolume: this.musicVol, sfxVolume: this.sfxVol, isMuted: this.isMuted, backgroundBells: this.backgroundBells });
       audioManager.playSnap();
       return;
     }
 
-    // Music Volume Slider (x: 480 to 760, y: 280 to 325)
-    if (mouse.isDown && mx >= 460 && mx <= 780 && my >= 280 && my <= 325) {
+    // Music Volume Slider (x: 460 to 780, y: 250 to 290)
+    if (mouse.isDown && mx >= 460 && mx <= 780 && my >= 250 && my <= 290) {
       this.musicVol = Math.max(0, Math.min(1, (mx - 480) / 280));
       audioManager.setVolume(this.sfxVol, this.musicVol);
-      SaveSystem.save({ musicVolume: this.musicVol, sfxVolume: this.sfxVol, isMuted: this.isMuted });
+      SaveSystem.save({ musicVolume: this.musicVol, sfxVolume: this.sfxVol, isMuted: this.isMuted, backgroundBells: this.backgroundBells });
     }
 
-    // SFX Volume Slider (x: 480 to 760, y: 360 to 405)
-    if (mouse.isDown && mx >= 460 && mx <= 780 && my >= 360 && my <= 405) {
+    // SFX Volume Slider (x: 460 to 780, y: 320 to 360)
+    if (mouse.isDown && mx >= 460 && mx <= 780 && my >= 320 && my <= 360) {
       const prev = this.sfxVol;
       this.sfxVol = Math.max(0, Math.min(1, (mx - 480) / 280));
       audioManager.setVolume(this.sfxVol, this.musicVol);
-      SaveSystem.save({ musicVolume: this.musicVol, sfxVolume: this.sfxVol, isMuted: this.isMuted });
+      SaveSystem.save({ musicVolume: this.musicVol, sfxVolume: this.sfxVol, isMuted: this.isMuted, backgroundBells: this.backgroundBells });
       if (Math.abs(prev - this.sfxVol) > 0.08) {
         audioManager.playSnap();
       }
     }
 
-    // Toggle Mute Button (x: 520 to 760, y: 440 to 490)
-    if (mouse.justPressed && mx >= 520 && mx <= 760 && my >= 440 && my <= 490) {
+    // Toggle Background Bells Button (x: 490 to 770, y: 390 to 434)
+    if (mouse.justPressed && mx >= 490 && mx <= 770 && my >= 390 && my <= 434) {
+      this.backgroundBells = !this.backgroundBells;
+      audioManager.setBackgroundBells(this.backgroundBells);
+      SaveSystem.save({ musicVolume: this.musicVol, sfxVolume: this.sfxVol, isMuted: this.isMuted, backgroundBells: this.backgroundBells });
+      audioManager.playSnap();
+      audioManager.vibrate([20]);
+    }
+
+    // Toggle Mute Button (x: 510 to 750, y: 450 to 498)
+    if (mouse.justPressed && mx >= 510 && mx <= 750 && my >= 450 && my <= 498) {
       this.isMuted = !this.isMuted;
       audioManager.setMute(this.isMuted);
-      SaveSystem.save({ musicVolume: this.musicVol, sfxVolume: this.sfxVol, isMuted: this.isMuted });
+      SaveSystem.save({ musicVolume: this.musicVol, sfxVolume: this.sfxVol, isMuted: this.isMuted, backgroundBells: this.backgroundBells });
       audioManager.playSnap();
     }
   }
@@ -282,21 +304,25 @@ export class UIManager {
       : Boolean(this.game && this.game.dialogue && this.game.dialogue.active);
 
     const isMobile = Boolean(this.game && this.game.input && this.game.input.isMobile);
-    const gx = isMobile ? 1010 : 1130;
-    const gy = isMobile ? 610 : 640;
-    const gw = isMobile ? 115 : 120;
-    const gh = isMobile ? 46 : 48;
+    const layout = this.game && this.game.input && typeof this.game.input.getButtonLayout === 'function'
+      ? this.game.input.getButtonLayout()
+      : null;
+    const gx = isMobile && layout ? layout.gulal.x : (isMobile ? 940 : 1130);
+    const gy = isMobile && layout ? layout.gulal.y : (isMobile ? 614 : 640);
+    const gw = isMobile && layout ? layout.gulal.w : (isMobile ? 128 : 120);
+    const gh = isMobile && layout ? layout.gulal.h : (isMobile ? 54 : 48);
 
     if (!isBlocked) {
-      ctx.fillStyle = '#db2777';
+      const isPressed = Boolean(this.game && this.game.input && this.game.input.mobileButtons && this.game.input.mobileButtons.gulal);
+      ctx.fillStyle = isPressed ? '#be185d' : '#db2777';
       ctx.beginPath();
-      ctx.roundRect(gx, gy, gw, gh, 12);
+      ctx.roundRect(gx, gy, gw, gh, 16);
       ctx.fill();
-      ctx.strokeStyle = '#fde047';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = isPressed ? '#ffffff' : '#fde047';
+      ctx.lineWidth = isPressed ? 2.8 : 2.0;
       ctx.stroke();
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 13px sans-serif';
+      ctx.font = isMobile ? 'bold 15px sans-serif' : 'bold 13px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(isMobile ? '🎨 GULAL' : '🎨 GULAL [Space]', gx + gw / 2, gy + gh / 2 + 5);
       ctx.textAlign = 'left';
@@ -431,7 +457,7 @@ export class UIManager {
     ctx.save();
     ctx.fillStyle = 'rgba(255, 143, 0, 0.9)';
     ctx.beginPath();
-    ctx.roundRect(540, 640, 200, 44, 22);
+    ctx.roundRect(520, 560, 240, 46, 23);
     ctx.fill();
     ctx.strokeStyle = '#ffd54f';
     ctx.lineWidth = 2;
@@ -441,7 +467,7 @@ export class UIManager {
     ctx.font = 'bold 15px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(text, 640, 662);
+    ctx.fillText(text, 640, 583);
     ctx.restore();
   }
 
@@ -467,6 +493,20 @@ export class UIManager {
     ctx.strokeStyle = '#ffb300';
     ctx.lineWidth = 3;
     ctx.stroke();
+
+    // Close Button [X]
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.roundRect(765, 195, 40, 36, 8);
+    ctx.fill();
+    ctx.strokeStyle = '#ffd54f';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✕', 785, 219);
 
     ctx.fillStyle = '#ffd54f';
     ctx.font = 'bold 28px sans-serif';
@@ -503,7 +543,7 @@ export class UIManager {
 
     ctx.fillStyle = '#1e2433';
     ctx.beginPath();
-    ctx.roundRect(380, 140, 520, 440, 16);
+    ctx.roundRect(380, 135, 520, 440, 16);
     ctx.fill();
     ctx.strokeStyle = '#ffb300';
     ctx.lineWidth = 3;
@@ -512,38 +552,43 @@ export class UIManager {
     ctx.fillStyle = '#ffd54f';
     ctx.font = 'bold 26px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('AUDIO SETTINGS', 640, 195);
+    ctx.fillText('AUDIO SETTINGS', 640, 185);
 
     // Close Button [X]
-    ctx.fillStyle = '#ff3d00';
+    ctx.fillStyle = '#ef4444';
     ctx.beginPath();
-    ctx.roundRect(830, 160, 45, 34, 6);
+    ctx.roundRect(845, 150, 40, 36, 8);
     ctx.fill();
+    ctx.strokeStyle = '#ffd54f';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 16px sans-serif';
-    ctx.fillText('X', 852, 183);
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✕', 865, 174);
 
     // Music Volume Section
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 15px sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText(`🎵 Music Volume: ${Math.round(this.musicVol * 100)}%`, 480, 272);
+    ctx.fillText(`🎵 Music Volume: ${Math.round(this.musicVol * 100)}%`, 480, 248);
 
     // Music Slider Track
     ctx.fillStyle = '#37474f';
     ctx.beginPath();
-    ctx.roundRect(480, 286, 280, 10, 5);
+    ctx.roundRect(480, 260, 280, 10, 5);
     ctx.fill();
     // Music Slider Fill
     ctx.fillStyle = '#ffb300';
     ctx.beginPath();
-    ctx.roundRect(480, 286, 280 * this.musicVol, 10, 5);
+    ctx.roundRect(480, 260, 280 * this.musicVol, 10, 5);
     ctx.fill();
     // Music Draggable Knob
     const musicKnobX = 480 + 280 * this.musicVol;
     ctx.fillStyle = '#ffd54f';
     ctx.beginPath();
-    ctx.arc(musicKnobX, 291, 10, 0, Math.PI * 2);
+    ctx.arc(musicKnobX, 265, 10, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 2;
@@ -553,41 +598,55 @@ export class UIManager {
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 15px sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText(`🔔 Sound Effects (SFX): ${Math.round(this.sfxVol * 100)}%`, 480, 352);
+    ctx.fillText(`🔊 Sound Effects (SFX): ${Math.round(this.sfxVol * 100)}%`, 480, 318);
 
     // SFX Slider Track
     ctx.fillStyle = '#37474f';
     ctx.beginPath();
-    ctx.roundRect(480, 366, 280, 10, 5);
+    ctx.roundRect(480, 330, 280, 10, 5);
     ctx.fill();
     // SFX Slider Fill
     ctx.fillStyle = '#ff8f00';
     ctx.beginPath();
-    ctx.roundRect(480, 366, 280 * this.sfxVol, 10, 5);
+    ctx.roundRect(480, 330, 280 * this.sfxVol, 10, 5);
     ctx.fill();
     // SFX Draggable Knob
     const sfxKnobX = 480 + 280 * this.sfxVol;
     ctx.fillStyle = '#ffd54f';
     ctx.beginPath();
-    ctx.arc(sfxKnobX, 371, 10, 0, Math.PI * 2);
+    ctx.arc(sfxKnobX, 335, 10, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Mute Button
-    ctx.fillStyle = this.isMuted ? '#d50000' : '#00c853';
+    // Background Bells Toggle Button
+    ctx.fillStyle = this.backgroundBells ? '#15803d' : '#475569';
     ctx.beginPath();
-    ctx.roundRect(520, 440, 240, 48, 8);
+    ctx.roundRect(490, 390, 280, 42, 8);
+    ctx.fill();
+    ctx.strokeStyle = this.backgroundBells ? '#ffd700' : '#94a3b8';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(this.backgroundBells ? '🔔 BACKGROUND BELLS: ON' : '🔕 BACKGROUND BELLS: OFF', 630, 416);
+
+    // Mute Button
+    ctx.fillStyle = this.isMuted ? '#d50000' : '#0284c7';
+    ctx.beginPath();
+    ctx.roundRect(510, 450, 240, 44, 8);
     ctx.fill();
     ctx.strokeStyle = '#ffd54f';
     ctx.lineWidth = 2;
     ctx.stroke();
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 16px sans-serif';
+    ctx.font = 'bold 15px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(this.isMuted ? '🔇 UNMUTE ALL AUDIO' : '🔊 MUTE AUDIO', 640, 470);
+    ctx.fillText(this.isMuted ? '🔇 UNMUTE ALL AUDIO' : '🔊 MUTE AUDIO', 630, 477);
 
     ctx.restore();
   }
@@ -604,6 +663,20 @@ export class UIManager {
     ctx.strokeStyle = '#ffd54f';
     ctx.lineWidth = 3;
     ctx.stroke();
+
+    // Close Button [X]
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.roundRect(885, 115, 40, 36, 8);
+    ctx.fill();
+    ctx.strokeStyle = '#ffd54f';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✕', 905, 139);
 
     ctx.fillStyle = '#ffd700';
     ctx.font = 'bold 28px sans-serif';

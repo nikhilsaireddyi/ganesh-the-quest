@@ -20,11 +20,23 @@ window.addEventListener('DOMContentLoaded', () => {
     window.removeEventListener('click', unlockAudio);
     window.removeEventListener('keydown', unlockAudio);
     window.removeEventListener('touchstart', unlockAudio);
+    if (audioBanner) {
+      audioBanner.removeEventListener('click', unlockAudio);
+      audioBanner.removeEventListener('touchstart', unlockAudio);
+    }
+    canvas.removeEventListener('touchstart', unlockAudio);
+    canvas.removeEventListener('click', unlockAudio);
   };
 
   window.addEventListener('click', unlockAudio);
   window.addEventListener('keydown', unlockAudio);
-  window.addEventListener('touchstart', unlockAudio);
+  window.addEventListener('touchstart', unlockAudio, { passive: true });
+  if (audioBanner) {
+    audioBanner.addEventListener('click', unlockAudio);
+    audioBanner.addEventListener('touchstart', unlockAudio, { passive: true });
+  }
+  canvas.addEventListener('click', unlockAudio);
+  canvas.addEventListener('touchstart', unlockAudio, { passive: true });
 
   engine.start();
 });

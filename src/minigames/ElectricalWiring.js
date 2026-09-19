@@ -51,16 +51,29 @@ export class ElectricalWiring {
   update(dt, input, particles) {
     if (!this.active) return;
 
+    const mouse = input && input.mouse;
+
+    // Close button [X] (x: 1065, y: 75 with generous touch padding)
+    if (mouse && mouse.justPressed && mouse.x >= 1040 && mouse.x <= 1120 && mouse.y >= 55 && mouse.y <= 125) {
+      this.active = false;
+      audioManager.playSnap();
+      mouse.justPressed = false;
+      if (this.completed && this.onComplete) {
+        this.onComplete();
+      }
+      return;
+    }
+
     if (this.completed) {
       this.completionTimer += dt;
-      if (this.completionTimer > 1.8) {
+      if (this.completionTimer > 1.2 || (mouse && mouse.justPressed) || (input && input.interactPressed)) {
+        if (mouse) mouse.justPressed = false;
+        if (input) input.interactPressed = false;
         this.active = false;
         if (this.onComplete) this.onComplete();
       }
       return;
     }
-
-    const mouse = input.mouse;
 
     // Start dragging from left terminal
     if (mouse.justPressed) {
@@ -132,6 +145,20 @@ export class ElectricalWiring {
     ctx.strokeStyle = '#ffd600';
     ctx.lineWidth = 3;
     ctx.stroke();
+
+    // Close Button [X]
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.roundRect(1065, 75, 40, 36, 8);
+    ctx.fill();
+    ctx.strokeStyle = '#ffd54f';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✕', 1085, 99);
 
     // Header
     ctx.fillStyle = '#ffd600';

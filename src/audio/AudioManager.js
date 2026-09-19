@@ -11,6 +11,7 @@ export class AudioManager {
     this.musicGain = null;
     this.sfxGain = null;
     this.isMuted = false;
+    this.backgroundBells = true;
     this.musicVolume = 0.6;
     this.sfxVolume = 0.8;
     this.currentMusic = null;
@@ -50,6 +51,10 @@ export class AudioManager {
     if (this.masterGain && this.ctx) {
       this.masterGain.gain.setValueAtTime(mute ? 0 : 1, this.ctx.currentTime);
     }
+  }
+
+  setBackgroundBells(enabled) {
+    this.backgroundBells = enabled;
   }
 
   setVolume(sfx, music) {
@@ -320,7 +325,7 @@ export class AudioManager {
         if (step % 8 === 0 || step % 8 === 4) {
           this.synthesizeFlute(ragBhupali[(step / 2) % ragBhupali.length], 0.11, 0.6, t);
         }
-        if (step % 8 === 6) {
+        if (step % 8 === 6 && this.backgroundBells) {
           this.playBell();
         }
         const noteIdx = [0, 1, 2, 4, 3, 2, 1, 0][step % 8];
@@ -339,7 +344,7 @@ export class AudioManager {
         }
         if (step % 8 === 0) {
           this.playShehnaiNote(587.33, 0.45);
-        } else if (step % 8 === 4) {
+        } else if (step % 8 === 4 && this.backgroundBells) {
           this.playBell();
         }
       } else if (theme === 'VISARJAN') {

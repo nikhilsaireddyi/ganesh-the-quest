@@ -121,8 +121,8 @@ export class PhotoMode {
 
       const mouse = input.mouse;
       if (mouse && mouse.justPressed) {
-        // Shutter button (center bottom: 640, 650, radius: 36)
-        if (Math.hypot(mouse.x - 640, mouse.y - 650) <= 36) {
+        // Shutter button (center bottom: 640, 615, radius: 42)
+        if (Math.hypot(mouse.x - 640, mouse.y - 615) <= 42) {
           this.capture(this.game.canvas);
           mouse.justPressed = false;
           return;
@@ -135,8 +135,8 @@ export class PhotoMode {
           return;
         }
 
-        // Scrapbook button (bottom right: 1100, 640)
-        if (mouse.x >= 1060 && mouse.x <= 1240 && mouse.y >= 625 && mouse.y <= 675) {
+        // Scrapbook button (bottom right: 1070 to 1220, y: 595 to 640)
+        if (mouse.x >= 1060 && mouse.x <= 1230 && mouse.y >= 590 && mouse.y <= 645) {
           this.showScrapbook = true;
           this.active = false;
           audioManager.playSnap();
@@ -153,8 +153,8 @@ export class PhotoMode {
         const mx = mouse.x;
         const my = mouse.y;
 
-        // Close Scrapbook (click outside 200..1080 or click Close)
-        if (mx < 180 || mx > 1100 || my < 60 || my > 660 || (mx > 1030 && mx < 1070 && my > 70 && my < 110)) {
+        // Close Scrapbook (click outside 190..1090 or click Close)
+        if (mx < 190 || mx > 1090 || my < 70 || my > 650 || (mx >= 1025 && mx <= 1085 && my >= 75 && my <= 125)) {
           this.showScrapbook = false;
           this.selectedPhoto = null;
           audioManager.playSnap();
@@ -289,27 +289,27 @@ export class PhotoMode {
     ctx.textAlign = 'center';
     ctx.fillText('EXIT ✕', 1197, 43);
 
-    // Scrapbook Button Bottom Right
+    // Scrapbook Button Bottom Right (Elevated for safe bottom clearance)
     ctx.fillStyle = '#0f172a';
     ctx.beginPath();
-    ctx.roundRect(1070, 630, 150, 42, 10);
+    ctx.roundRect(1070, 595, 150, 42, 10);
     ctx.fill();
     ctx.strokeStyle = '#ffd700';
     ctx.lineWidth = 1.5;
     ctx.stroke();
     ctx.fillStyle = '#ffd54f';
     ctx.font = 'bold 13px sans-serif';
-    ctx.fillText(`📖 SCRAPBOOK (${this.photos.length})`, 1145, 656);
+    ctx.fillText(`📖 SCRAPBOOK (${this.photos.length})`, 1145, 621);
 
-    // Shutter Button Bottom Center
+    // Shutter Button Bottom Center (Elevated for safe bottom clearance)
     ctx.fillStyle = 'rgba(15, 23, 42, 0.7)';
     ctx.beginPath();
-    ctx.arc(640, 650, 42, 0, Math.PI * 2);
+    ctx.arc(640, 615, 42, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(640, 650, 32, 0, Math.PI * 2);
+    ctx.arc(640, 615, 32, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = '#ffd700';
     ctx.lineWidth = 3.5;
@@ -317,7 +317,7 @@ export class PhotoMode {
 
     ctx.fillStyle = '#e65100';
     ctx.beginPath();
-    ctx.arc(640, 650, 24, 0, Math.PI * 2);
+    ctx.arc(640, 615, 24, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
@@ -360,10 +360,21 @@ export class PhotoMode {
     ctx.textAlign = 'center';
     ctx.fillText('📖 FESTIVAL MEMORIES SCRAPBOOK', mx + mw / 2, my + 44);
 
-    // Close button
+    // Close button [X]
+    const btnX = mx + mw - 55;
+    const btnY = my + 14;
     ctx.fillStyle = '#ef4444';
-    ctx.font = 'bold 22px sans-serif';
-    ctx.fillText('✕', mx + mw - 35, my + 40);
+    ctx.beginPath();
+    ctx.roundRect(btnX, btnY, 40, 36, 8);
+    ctx.fill();
+    ctx.strokeStyle = '#ffd54f';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✕', btnX + 20, btnY + 24);
 
     // If viewing single enlarged photo
     if (this.selectedPhoto) {

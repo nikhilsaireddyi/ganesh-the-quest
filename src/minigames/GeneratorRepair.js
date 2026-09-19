@@ -106,16 +106,29 @@ export class GeneratorRepair {
       this.handleShake = Math.max(0, this.handleShake - dt * 6);
     }
 
+    const mouse = input && input.mouse;
+
+    // Close button [X] (x: 1045, y: 95 with generous touch padding)
+    if (mouse && mouse.justPressed && mouse.x >= 1020 && mouse.x <= 1100 && mouse.y >= 75 && mouse.y <= 145) {
+      this.active = false;
+      audioManager.playSnap();
+      mouse.justPressed = false;
+      if (this.completed && this.onComplete) {
+        this.onComplete();
+      }
+      return;
+    }
+
     if (this.completed) {
       this.completionTimer += dt;
-      if (this.completionTimer > 1.8) {
+      if (this.completionTimer > 1.2 || (mouse && mouse.justPressed) || (input && input.interactPressed)) {
+        if (mouse) mouse.justPressed = false;
+        if (input) input.interactPressed = false;
         this.active = false;
         if (this.onComplete) this.onComplete();
       }
       return;
     }
-
-    const mouse = input.mouse;
 
     // STEP 1: Reconnect Cable
     if (this.step === 1) {
@@ -197,6 +210,20 @@ export class GeneratorRepair {
     ctx.strokeStyle = '#ff9800';
     ctx.lineWidth = 3;
     ctx.stroke();
+
+    // Close Button [X]
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.roundRect(1045, 95, 40, 36, 8);
+    ctx.fill();
+    ctx.strokeStyle = '#ffd54f';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✕', 1065, 119);
 
     // Title
     ctx.fillStyle = '#ffb300';

@@ -202,14 +202,22 @@ export class ProcessionScene {
     const progress = Math.min(1.0, this.distanceTraveled / this.totalDistance);
 
     // Interactive Dhol-Tasha prompt trigger
-    if (!this.rhythmGamePlayed && progress > 0.25 && progress < 0.50 && (input.interactPressed || (input.mouse && input.mouse.justPressed && input.mouse.y > 600))) {
+    const isDholClicked = input.mouse && input.mouse.justPressed &&
+      input.mouse.x >= 430 && input.mouse.x <= 850 &&
+      input.mouse.y >= 540 && input.mouse.y <= 620;
+
+    if (!this.rhythmGamePlayed && progress > 0.25 && progress < 0.50 && (input.interactPressed || isDholClicked)) {
       input.interactPressed = false;
       this.rhythmGame.start();
       return;
     }
 
     // Interactive Lezim Folk Dance prompt trigger
-    if (!this.lezimPlayed && progress > 0.52 && progress < 0.78 && (input.interactPressed || (input.keys && input.keys['KeyL']) || (input.mouse && input.mouse.justPressed && input.mouse.y > 600))) {
+    const isLezimClicked = input.mouse && input.mouse.justPressed &&
+      input.mouse.x >= 430 && input.mouse.x <= 850 &&
+      input.mouse.y >= 540 && input.mouse.y <= 620;
+
+    if (!this.lezimPlayed && progress > 0.52 && progress < 0.78 && (input.interactPressed || (input.keys && input.keys['KeyL']) || isLezimClicked)) {
       input.interactPressed = false;
       if (input.keys) input.keys['KeyL'] = false;
       this.lezimDance.start();
@@ -275,10 +283,17 @@ export class ProcessionScene {
 
     // Camera follows smoothly slightly ahead of chariot
     this.game.camera.targetX = this.chariotX + 180;
-    this.game.camera.targetY = 480;
+    this.game.camera.targetY = this.game.input.isMobile ? 480 : 390;
 
     // Player can explore freely left/right along the procession
     const moveX = input.axisX;
+    if (Math.abs(moveX) > 0.1) {
+      this.player.facing = moveX > 0 ? 1 : -1;
+      this.player.state = 'walk';
+    } else {
+      this.player.state = 'idle';
+    }
+    this.player.animTime += dt;
     this.player.x += moveX * 120 * dt;
 
     // Transition to Visarjan when procession reaches the sacred water ghat
@@ -801,12 +816,13 @@ export class ProcessionScene {
     ctx.font = '13px sans-serif';
     ctx.fillText(`Approaching Sacred Ghat: ${percent}%`, 640, 66);
 
-    // Dhol Rhythm prompt
+    // Dhol Rhythm prompt (Dynamically positioned with safe bottom clearance on all displays)
     if (!this.rhythmGamePlayed && !this.rhythmGame.active && percent > 25 && percent < 50) {
       const pulse = Math.sin(Date.now() * 0.008) * 3;
+      const py = 556 + pulse;
       ctx.fillStyle = '#ff6d00';
       ctx.beginPath();
-      ctx.roundRect(470, 630 + pulse, 340, 46, 23);
+      ctx.roundRect(440, py, 400, 50, 25);
       ctx.fill();
       ctx.strokeStyle = '#ffd700';
       ctx.lineWidth = 2.5;
@@ -815,15 +831,16 @@ export class ProcessionScene {
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 15px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('🥁 PLAY DHOL-TASHA BEATS [E]', 640, 658 + pulse);
+      ctx.fillText('🥁 PLAY DHOL-TASHA BEATS [E]', 640, py + 31);
     }
 
-    // Lezim Dance prompt
+    // Lezim Dance prompt (Dynamically positioned with safe bottom clearance on all displays)
     if (!this.lezimPlayed && !this.lezimDance.active && percent >= 52 && percent < 78) {
       const pulse = Math.sin(Date.now() * 0.008) * 3;
+      const py = 556 + pulse;
       ctx.fillStyle = '#10b981';
       ctx.beginPath();
-      ctx.roundRect(470, 630 + pulse, 340, 46, 23);
+      ctx.roundRect(440, py, 400, 50, 25);
       ctx.fill();
       ctx.strokeStyle = '#fef08a';
       ctx.lineWidth = 2.5;
@@ -832,7 +849,7 @@ export class ProcessionScene {
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 15px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('🔔 DANCE LEZIM FOLK DANCE [E] / [L]', 640, 658 + pulse);
+      ctx.fillText('🔔 DANCE LEZIM FOLK DANCE [E] / [L]', 640, py + 31);
     }
 
     ctx.restore();

@@ -29,9 +29,23 @@ export class SynchronizedLift {
   update(dt, input, particles, camera) {
     if (!this.active) return;
 
+    const mouse = input && input.mouse;
+    // Close button [X] (x: 1200, y: 30 with generous touch padding)
+    if (mouse && mouse.justPressed && mouse.x >= 1180 && mouse.x <= 1255 && mouse.y >= 15 && mouse.y <= 80) {
+      this.active = false;
+      audioManager.playSnap();
+      mouse.justPressed = false;
+      if (this.completed && this.onComplete) {
+        this.onComplete();
+      }
+      return;
+    }
+
     if (this.completed) {
       this.completionTimer += dt;
-      if (this.completionTimer > 2.0) {
+      if (this.completionTimer > 1.2 || (mouse && mouse.justPressed) || (input && input.interactPressed)) {
+        if (mouse) mouse.justPressed = false;
+        if (input) input.interactPressed = false;
         this.active = false;
         if (this.onComplete) this.onComplete();
       }
@@ -84,6 +98,20 @@ export class SynchronizedLift {
     // Modal Overlay
     ctx.fillStyle = 'rgba(10, 14, 26, 0.85)';
     ctx.fillRect(0, 0, 1280, 720);
+
+    // Close Button [X]
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.roundRect(1200, 30, 40, 36, 8);
+    ctx.fill();
+    ctx.strokeStyle = '#ffd54f';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✕', 1220, 54);
 
     // Title Card
     ctx.fillStyle = '#ffb300';

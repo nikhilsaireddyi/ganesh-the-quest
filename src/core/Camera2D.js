@@ -32,6 +32,9 @@ export class Camera2D {
     this.shakeOffsetX = 0;
     this.shakeOffsetY = 0;
 
+    // Device mode tracking (PC vs Mobile floor placement)
+    this.isMobile = false;
+
     // Scripted cutscene override
     this.isScripted = false;
   }
@@ -43,16 +46,20 @@ export class Camera2D {
     this.maxY = maxY;
   }
 
-  follow(entity) {
+  follow(entity, isMobile = this.isMobile) {
     if (this.isScripted) return;
     this.targetX = entity.x;
-    this.targetY = entity.y - 40; // Aim slightly above feet
+    // On mobile: floor is in the middle (entity.y - 40) because touch buttons are at the bottom.
+    // On PC: floor is slightly lower to the bottom (entity.y - 130) because buttons are not there.
+    const yOffset = isMobile ? 40 : 130;
+    this.targetY = entity.y - yOffset;
   }
 
   panTo(x, y, zoom = 1.0, speed = 0.05) {
     this.isScripted = true;
     this.targetX = x;
-    this.targetY = y;
+    const pcOffset = !this.isMobile ? 90 : 0;
+    this.targetY = y - pcOffset;
     this.targetZoom = zoom;
     this.lerpSpeed = speed;
   }

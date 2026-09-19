@@ -53,6 +53,16 @@ export class DialogueBox {
       }
     }
 
+    // Close / Skip button [X]
+    if (input.mouse && input.mouse.justPressed && input.mouse.x >= 1100 && input.mouse.x <= 1150 && input.mouse.y >= 505 && input.mouse.y <= 555) {
+      input.mouse.justPressed = false;
+      input.interactPressed = false;
+      this.active = false;
+      audioManager.playSnap();
+      if (this.onComplete) this.onComplete();
+      return;
+    }
+
     // Advance dialogue (E, Space, or tap/click anywhere)
     const advance = input.interactPressed || input.mouse.justPressed;
 
@@ -97,6 +107,20 @@ export class DialogueBox {
     ctx.strokeStyle = '#ffd54f';
     ctx.lineWidth = 2.5;
     ctx.stroke();
+
+    // Close / Skip Button [X]
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.roundRect(1105, 512, 40, 36, 8);
+    ctx.fill();
+    ctx.strokeStyle = '#ffd54f';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✕', 1125, 536);
 
     // Ornate Gold Corner Motifs
     ctx.strokeStyle = '#ffb300';

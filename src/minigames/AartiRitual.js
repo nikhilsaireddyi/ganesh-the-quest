@@ -41,16 +41,30 @@ export class AartiRitual {
   update(dt, input, particles) {
     if (!this.active) return;
 
+    const mouse = input && input.mouse;
+
+    // Close button [X] (x: 1200, y: 30 with generous touch padding)
+    if (mouse && mouse.justPressed && mouse.x >= 1180 && mouse.x <= 1255 && mouse.y >= 15 && mouse.y <= 80) {
+      this.active = false;
+      audioManager.playSnap();
+      mouse.justPressed = false;
+      if (this.completed && this.onComplete) {
+        this.onComplete();
+      }
+      return;
+    }
+
     if (this.completed) {
       this.completionTimer += dt;
-      if (this.completionTimer > 2.2) {
+      if (this.completionTimer > 1.2 || (mouse && mouse.justPressed) || (input && input.interactPressed)) {
+        if (mouse) mouse.justPressed = false;
+        if (input) input.interactPressed = false;
         this.active = false;
         if (this.onComplete) this.onComplete();
       }
       return;
     }
 
-    const mouse = input.mouse;
     const centerX = 640;
     const centerY = 340;
 
@@ -169,6 +183,20 @@ export class AartiRitual {
       ctx.fill();
     });
     ctx.restore();
+
+    // Close Button [X]
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.roundRect(1200, 30, 44, 38, 8);
+    ctx.fill();
+    ctx.strokeStyle = '#ffd54f';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✕', 1222, 55);
 
     // Title & Instructions Header
     ctx.fillStyle = '#ffd700';

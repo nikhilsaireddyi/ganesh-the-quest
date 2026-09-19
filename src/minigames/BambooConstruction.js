@@ -11,22 +11,22 @@ export class BambooConstruction {
     this.active = false;
     this.completed = false;
 
-    // 5 Bamboo pieces
+    // 5 Bamboo pieces (Spaced out comfortably across the tray with generous touch hitboxes)
     this.pieces = [
-      { id: 'left_support', name: 'Left Pillar', x: 220, y: 560, origX: 220, origY: 560, w: 20, h: 140, placed: false },
-      { id: 'right_support', name: 'Right Pillar', x: 380, y: 560, origX: 380, origY: 560, w: 20, h: 140, placed: false },
-      { id: 'top_beam', name: 'Top Beam', x: 540, y: 560, origX: 540, origY: 560, w: 180, h: 20, placed: false },
-      { id: 'mid_support', name: 'Center Post', x: 740, y: 560, origX: 740, origY: 560, w: 20, h: 140, placed: false },
-      { id: 'roof_support', name: 'Roof Truss', x: 920, y: 560, origX: 920, origY: 560, w: 140, h: 40, placed: false }
+      { id: 'left_support', name: 'Left Pillar', x: 270, y: 555, origX: 270, origY: 555, w: 22, h: 140, placed: false },
+      { id: 'right_support', name: 'Right Pillar', x: 450, y: 555, origX: 450, origY: 555, w: 22, h: 140, placed: false },
+      { id: 'top_beam', name: 'Top Beam', x: 640, y: 555, origX: 640, origY: 555, w: 180, h: 22, placed: false },
+      { id: 'mid_support', name: 'Center Post', x: 830, y: 555, origX: 830, origY: 555, w: 22, h: 140, placed: false },
+      { id: 'roof_support', name: 'Roof Truss', x: 1010, y: 555, origX: 1010, origY: 555, w: 140, h: 42, placed: false }
     ];
 
     // Corresponding target slots (in mandapam coordinates)
     this.slots = [
-      { id: 'left_support', x: 550, y: 290, w: 24, h: 144, occupied: false },
-      { id: 'right_support', x: 730, y: 290, w: 24, h: 144, occupied: false },
-      { id: 'top_beam', x: 640, y: 215, w: 184, h: 24, occupied: false },
-      { id: 'mid_support', x: 640, y: 290, w: 24, h: 144, occupied: false },
-      { id: 'roof_support', x: 640, y: 180, w: 144, h: 44, occupied: false }
+      { id: 'left_support', x: 550, y: 290, w: 26, h: 146, occupied: false },
+      { id: 'right_support', x: 730, y: 290, w: 26, h: 146, occupied: false },
+      { id: 'top_beam', x: 640, y: 215, w: 186, h: 26, occupied: false },
+      { id: 'mid_support', x: 640, y: 290, w: 26, h: 146, occupied: false },
+      { id: 'roof_support', x: 640, y: 180, w: 146, h: 46, occupied: false }
     ];
 
     this.draggedPiece = null;
@@ -50,23 +50,37 @@ export class BambooConstruction {
   update(dt, input, particles) {
     if (!this.active) return;
 
+    const mouse = input && input.mouse;
+
+    // Close button [X] (x: 1085, y: 75 with generous touch padding)
+    if (mouse && mouse.justPressed && mouse.x >= 1060 && mouse.x <= 1140 && mouse.y >= 55 && mouse.y <= 125) {
+      this.active = false;
+      audioManager.playSnap();
+      mouse.justPressed = false;
+      if (this.completed && this.onComplete) {
+        this.onComplete();
+      }
+      return;
+    }
+
     if (this.completed) {
       this.completionTimer += dt;
-      if (this.completionTimer > 1.8) {
+      if (this.completionTimer > 1.2 || (mouse && mouse.justPressed) || (input && input.interactPressed)) {
+        if (mouse) mouse.justPressed = false;
+        if (input) input.interactPressed = false;
         this.active = false;
         if (this.onComplete) this.onComplete();
       }
       return;
     }
 
-    const mouse = input.mouse;
-
-    // Drag start
+    // Drag start with generous touch padding for mobile fingers
     if (mouse.justPressed) {
+      const touchPad = 25; // 25px touch margin so slender bamboo pillars are easily gripped
       for (const piece of this.pieces) {
         if (!piece.placed) {
-          const halfW = piece.w / 2;
-          const halfH = piece.h / 2;
+          const halfW = piece.w / 2 + touchPad;
+          const halfH = piece.h / 2 + touchPad;
           if (
             mouse.x >= piece.x - halfW &&
             mouse.x <= piece.x + halfW &&
@@ -93,7 +107,8 @@ export class BambooConstruction {
       const slot = this.slots.find(s => s.id === this.draggedPiece.id);
       const dist = Math.hypot(this.draggedPiece.x - slot.x, this.draggedPiece.y - slot.y);
 
-      if (dist < 60) {
+      // Generous snap radius for mobile touchscreens (85px)
+      if (dist < 85) {
         // Snap!
         this.draggedPiece.x = slot.x;
         this.draggedPiece.y = slot.y;
@@ -134,6 +149,20 @@ export class BambooConstruction {
     ctx.strokeStyle = '#ffb300';
     ctx.lineWidth = 3;
     ctx.stroke();
+
+    // Close Button [X]
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.roundRect(1085, 75, 40, 36, 8);
+    ctx.fill();
+    ctx.strokeStyle = '#ffd54f';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✕', 1105, 99);
 
     // Title & Instructions
     ctx.fillStyle = '#ffb300';

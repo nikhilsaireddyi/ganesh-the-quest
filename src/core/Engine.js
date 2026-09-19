@@ -39,6 +39,7 @@ export class Engine {
     // Subsystems
     this.assetRegistry = assetRegistry;
     this.input = new InputManager(canvas);
+    this.input.engine = this;
     this.camera = new Camera2D(this.virtualWidth, this.virtualHeight);
     this.particles = new ParticleSystem();
     this.parallax = new ParallaxSystem();
@@ -113,6 +114,7 @@ export class Engine {
     this.achievements.update(dt, this.input);
 
     // 2. Camera
+    this.camera.isMobile = this.input.isMobile;
     this.camera.update(dt);
 
     // 3. UI / Menus
@@ -133,6 +135,11 @@ export class Engine {
     if (!isGameplay) return true;
 
     const activeScene = this.sceneManager.currentScene;
+    // Storm protection is active world movement gameplay - controls must stay active!
+    if (activeScene && activeScene.stormProtection && activeScene.stormProtection.active) {
+      return false;
+    }
+
     const isMinigame = activeScene && typeof activeScene.isMinigameActive === 'function' && activeScene.isMinigameActive();
 
     return Boolean(

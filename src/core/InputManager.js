@@ -24,6 +24,7 @@ export class InputManager {
     this.interactPressed = false;
     this.pausePressed = false;
     this.shiftPressed = false;
+    this.gulalPressed = false;
 
     // Mouse state
     this.mouse = {
@@ -43,7 +44,8 @@ export class InputManager {
       left: false,
       right: false,
       sprint: false,
-      interact: false
+      interact: false,
+      gulal: false
     };
 
     // Active touch touchIds mapped to button names
@@ -137,12 +139,14 @@ export class InputManager {
   }
 
   // Mobile Touch Button Geometry (Canvas coords 1280x720)
+  // Slightly bigger buttons, positioned slightly towards the middle of the bottom background
   getButtonLayout() {
     return {
-      left: { x: 45, y: 565, w: 85, h: 85 },
-      right: { x: 155, y: 565, w: 85, h: 85 },
-      sprint: { x: 100, y: 480, w: 90, h: 55 },
-      interact: { x: 1145, y: 565, w: 90, h: 85 }
+      left: { x: 75, y: 572, w: 96, h: 96 },
+      right: { x: 185, y: 572, w: 96, h: 96 },
+      sprint: { x: 1088, y: 498, w: 106, h: 58 },
+      interact: { x: 1090, y: 572, w: 102, h: 96 },
+      gulal: { x: 940, y: 614, w: 128, h: 54 }
     };
   }
 
@@ -166,6 +170,9 @@ export class InputManager {
       this.mobileButtons.right = false;
       this.mobileButtons.sprint = false;
       this.mobileButtons.interact = false;
+      this.mobileButtons.gulal = false;
+
+      const isUIBlocked = Boolean(this.engine && typeof this.engine.isUIBlocked === 'function' && this.engine.isUIBlocked());
 
       const touches = e.touches;
       for (let i = 0; i < touches.length; i++) {
@@ -173,22 +180,30 @@ export class InputManager {
         const coords = this.getCanvasCoords(touch.clientX, touch.clientY);
 
         let hitButton = false;
-        if (this.hitTest(layout.left, coords.x, coords.y)) {
-          this.mobileButtons.left = true;
-          hitButton = true;
-        }
-        if (this.hitTest(layout.right, coords.x, coords.y)) {
-          this.mobileButtons.right = true;
-          hitButton = true;
-        }
-        if (this.hitTest(layout.sprint, coords.x, coords.y)) {
-          this.mobileButtons.sprint = true;
-          hitButton = true;
-        }
-        if (this.hitTest(layout.interact, coords.x, coords.y)) {
-          this.mobileButtons.interact = true;
-          this.interactPressed = true;
-          hitButton = true;
+        // Only evaluate on-screen gameplay buttons during normal exploration (never during puzzles/dialogues)
+        if (!isUIBlocked) {
+          if (this.hitTest(layout.left, coords.x, coords.y)) {
+            this.mobileButtons.left = true;
+            hitButton = true;
+          }
+          if (this.hitTest(layout.right, coords.x, coords.y)) {
+            this.mobileButtons.right = true;
+            hitButton = true;
+          }
+          if (this.hitTest(layout.sprint, coords.x, coords.y)) {
+            this.mobileButtons.sprint = true;
+            hitButton = true;
+          }
+          if (this.hitTest(layout.interact, coords.x, coords.y)) {
+            this.mobileButtons.interact = true;
+            this.interactPressed = true;
+            hitButton = true;
+          }
+          if (this.hitTest(layout.gulal, coords.x, coords.y)) {
+            this.mobileButtons.gulal = true;
+            this.gulalPressed = true;
+            hitButton = true;
+          }
         }
 
         if (!hitButton) {
@@ -206,17 +221,21 @@ export class InputManager {
       this.isMobile = true;
       const layout = this.getButtonLayout();
       const changed = e.changedTouches;
+      const isUIBlocked = Boolean(this.engine && typeof this.engine.isUIBlocked === 'function' && this.engine.isUIBlocked());
 
       for (let i = 0; i < changed.length; i++) {
         const touch = changed[i];
         const coords = this.getCanvasCoords(touch.clientX, touch.clientY);
 
-        if (this.hitTest(layout.interact, coords.x, coords.y)) {
+        if (!isUIBlocked && this.hitTest(layout.interact, coords.x, coords.y)) {
           this.interactPressed = true;
+        } else if (!isUIBlocked && this.hitTest(layout.gulal, coords.x, coords.y)) {
+          this.gulalPressed = true;
         } else if (
-          !this.hitTest(layout.left, coords.x, coords.y) &&
-          !this.hitTest(layout.right, coords.x, coords.y) &&
-          !this.hitTest(layout.sprint, coords.x, coords.y)
+          isUIBlocked ||
+          (!this.hitTest(layout.left, coords.x, coords.y) &&
+           !this.hitTest(layout.right, coords.x, coords.y) &&
+           !this.hitTest(layout.sprint, coords.x, coords.y))
         ) {
           this.mouse.x = coords.x;
           this.mouse.y = coords.y;
@@ -250,25 +269,25 @@ export class InputManager {
     ctx.save();
     const layout = this.getButtonLayout();
 
-    // Helper to render button
+    // Helper to render button with slightly larger size & modern styling
     const drawButton = (btn, label, icon, isPressed, color = '#ffd54f') => {
       ctx.fillStyle = isPressed ? 'rgba(255, 179, 0, 0.75)' : 'rgba(15, 23, 42, 0.78)';
       ctx.beginPath();
-      ctx.roundRect(btn.x, btn.y, btn.w, btn.h, 16);
+      ctx.roundRect(btn.x, btn.y, btn.w, btn.h, 18);
       ctx.fill();
 
       ctx.strokeStyle = isPressed ? '#ffffff' : color;
-      ctx.lineWidth = isPressed ? 2.5 : 1.8;
+      ctx.lineWidth = isPressed ? 2.8 : 2.0;
       ctx.stroke();
 
       ctx.fillStyle = '#ffffff';
       if (icon) {
-        ctx.font = 'bold 30px sans-serif';
+        ctx.font = 'bold 34px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(icon, btn.x + btn.w / 2, btn.y + btn.h / 2);
       } else if (label) {
-        ctx.font = 'bold 13px sans-serif';
+        ctx.font = 'bold 15px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(label, btn.x + btn.w / 2, btn.y + btn.h / 2);
@@ -293,6 +312,7 @@ export class InputManager {
   postUpdate() {
     this.interactPressed = false;
     this.pausePressed = false;
+    this.gulalPressed = false;
     this.mouse.justPressed = false;
     this.mouse.justReleased = false;
   }

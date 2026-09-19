@@ -37,6 +37,14 @@ export class LezimDance {
   update(dt, input) {
     if (!this.active) return;
 
+    const mouse = input && input.mouse;
+    if (mouse && mouse.justPressed && mouse.x >= 1170 && mouse.x <= 1250 && mouse.y >= 20 && mouse.y <= 85) {
+      this.active = false;
+      audioManager.playSnap();
+      mouse.justPressed = false;
+      return;
+    }
+
     this.timer += dt;
     this.beatTimer += dt;
 
@@ -81,7 +89,6 @@ export class LezimDance {
       }
     }
 
-    const mouse = input.mouse;
     if (mouse && mouse.justPressed) {
       // Check click on central target (640, 360, radius 80) or bottom button
       if (Math.hypot(mouse.x - 640, mouse.y - 360) <= 80 || (mouse.x >= 520 && mouse.x <= 760 && mouse.y >= 540 && mouse.y <= 600)) {
@@ -144,6 +151,20 @@ export class LezimDance {
     // Festive semi-transparent backdrop
     ctx.fillStyle = 'rgba(10, 14, 26, 0.85)';
     ctx.fillRect(0, 0, 1280, 720);
+
+    // Close Button [X]
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.roundRect(1190, 35, 40, 36, 8);
+    ctx.fill();
+    ctx.strokeStyle = '#ffd54f';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✕', 1210, 59);
 
     // Center Stage Podium
     ctx.fillStyle = '#1e293b';

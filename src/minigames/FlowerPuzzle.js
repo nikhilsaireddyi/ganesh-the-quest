@@ -81,16 +81,29 @@ export class FlowerPuzzle {
   update(dt, input, particles) {
     if (!this.active) return;
 
+    const mouse = input && input.mouse;
+
+    // Close button [X] (x: 1085, y: 75 with generous touch padding)
+    if (mouse && mouse.justPressed && mouse.x >= 1060 && mouse.x <= 1140 && mouse.y >= 55 && mouse.y <= 125) {
+      this.active = false;
+      audioManager.playSnap();
+      mouse.justPressed = false;
+      if (this.completed && this.onComplete) {
+        this.onComplete();
+      }
+      return;
+    }
+
     if (this.completed) {
       this.completionTimer += dt;
-      if (this.completionTimer > 1.8) {
+      if (this.completionTimer > 1.2 || (mouse && mouse.justPressed) || (input && input.interactPressed)) {
+        if (mouse) mouse.justPressed = false;
+        if (input) input.interactPressed = false;
         this.active = false;
         if (this.onComplete) this.onComplete();
       }
       return;
     }
-
-    const mouse = input.mouse;
 
     if (mouse.justPressed) {
       // Check if clicking flower source
@@ -154,6 +167,20 @@ export class FlowerPuzzle {
     ctx.strokeStyle = '#ff8f00';
     ctx.lineWidth = 3;
     ctx.stroke();
+
+    // Close Button [X]
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.roundRect(1085, 75, 40, 36, 8);
+    ctx.fill();
+    ctx.strokeStyle = '#ffd54f';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✕', 1105, 99);
 
     // Title & Instructions
     ctx.fillStyle = '#ffd54f';

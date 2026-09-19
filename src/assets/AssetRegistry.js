@@ -216,15 +216,55 @@ export class AssetRegistry {
         // Ear & Golden Kundal Stud
         ctx.fillStyle = '#cf8a5b';
         ctx.beginPath();
-        ctx.arc(facing > 0 ? -10 : 10, -68 - bob, 3, 0, Math.PI * 2);
+        ctx.arc(-10, -68 - bob, 3, 0, Math.PI * 2);
         ctx.fill();
         ctx.fillStyle = '#ffd700';
         ctx.beginPath();
-        ctx.arc(facing > 0 ? -10 : 10, -66 - bob, 1.5, 0, Math.PI * 2);
+        ctx.arc(-10, -66 - bob, 1.5, 0, Math.PI * 2);
         ctx.fill();
 
+        // Headwear / Hair / Pheta (Rendered before facial features and tilak)
+        if (wardrobe.headwear === 'none') {
+          // Styled Festive Hair
+          ctx.fillStyle = '#1c1c1c';
+          ctx.beginPath();
+          ctx.arc(0, -72 - bob, 12, Math.PI * 0.85, Math.PI * 2.15);
+          ctx.fill();
+          // Hair tuft volume / waves
+          ctx.beginPath();
+          ctx.arc(3, -78 - bob, 6, 0, Math.PI * 2);
+          ctx.arc(-4, -77 - bob, 7, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          // Traditional Maharashtrian Pheta Turban
+          const pColor = wardrobe.headwear === 'pheta_crimson' ? '#b71c1c' : (wardrobe.headwear === 'pheta_gold' ? '#f59e0b' : '#ea580c');
+          ctx.fillStyle = pColor;
+          ctx.beginPath();
+          ctx.roundRect(-13, -84 - bob, 26, 12, [7, 7, 2, 2]);
+          ctx.fill();
+
+          // Golden Zari Band
+          ctx.fillStyle = '#ffd700';
+          ctx.fillRect(-13, -74 - bob, 26, 3);
+
+          // Kalgi Plume / Crest
+          ctx.fillStyle = '#ffd700';
+          ctx.beginPath();
+          const kalgiX = 4;
+          ctx.moveTo(kalgiX - 3, -84 - bob);
+          ctx.lineTo(kalgiX, -94 - bob);
+          ctx.lineTo(kalgiX + 3, -84 - bob);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(kalgiX, -87 - bob, 1.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
         // Expressive Eyes & Smile
-        const eyeX = facing > 0 ? 3 : -6;
+        const eyeX = 3;
         ctx.fillStyle = '#212121';
         ctx.beginPath();
         ctx.ellipse(eyeX, -69 - bob, 2.5, 2, 0, 0, Math.PI * 2);
@@ -247,69 +287,37 @@ export class AssetRegistry {
         ctx.arc(eyeX, -63 - bob, 2.5, 0.2, Math.PI * 0.8);
         ctx.stroke();
 
-        // Sacred Tilak
+        // Sacred Tilak (Drawn ON TOP of forehead / lower turban band so it is always vibrant & visible)
         if (wardrobe.tilak === 'trident') {
+          // Yellow chandan U base
           ctx.fillStyle = '#ffd700';
-          ctx.fillRect(facing > 0 ? 2 : -4, -76 - bob, 5, 2); // Yellow chandan base
+          ctx.fillRect(1.5, -72 - bob, 4.5, 2.2);
+          // Red kumkum vertical mark
           ctx.fillStyle = '#d50000';
-          ctx.fillRect(facing > 0 ? 3.5 : -2.5, -77 - bob, 2, 6); // Red kumkum line
+          ctx.fillRect(3, -75 - bob, 2, 6.5);
         } else if (wardrobe.tilak === 'bindu') {
+          // Auspicious Red Kumkum Bindu
           ctx.fillStyle = '#d50000';
           ctx.beginPath();
-          ctx.arc(facing > 0 ? 4 : -3, -75 - bob, 2, 0, Math.PI * 2);
+          ctx.arc(3.5, -71 - bob, 2.2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#ffd700';
+          ctx.beginPath();
+          ctx.arc(3.5, -71 - bob, 0.8, 0, Math.PI * 2);
           ctx.fill();
         } else if (wardrobe.tilak === 'vibhuti') {
+          // Three sacred white Vibhuti lines with center vermillion dot
           ctx.strokeStyle = '#ffffff';
-          ctx.lineWidth = 1.2;
+          ctx.lineWidth = 1.3;
           ctx.beginPath();
-          ctx.moveTo(facing > 0 ? 1 : -5, -76 - bob);
-          ctx.lineTo(facing > 0 ? 7 : 1, -76 - bob);
-          ctx.moveTo(facing > 0 ? 1 : -5, -74 - bob);
-          ctx.lineTo(facing > 0 ? 7 : 1, -74 - bob);
+          ctx.moveTo(1, -73 - bob);
+          ctx.lineTo(6.5, -73 - bob);
+          ctx.moveTo(1, -71 - bob);
+          ctx.lineTo(6.5, -71 - bob);
           ctx.stroke();
           ctx.fillStyle = '#d50000';
           ctx.beginPath();
-          ctx.arc(facing > 0 ? 4 : -2, -75 - bob, 1.2, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        // Headwear / Hair / Pheta
-        if (wardrobe.headwear === 'none') {
-          // Styled Festive Hair
-          ctx.fillStyle = '#1c1c1c';
-          ctx.beginPath();
-          ctx.arc(0, -72 - bob, 12, Math.PI * 0.85, Math.PI * 2.15);
-          ctx.fill();
-          // Hair tuft volume / waves
-          ctx.beginPath();
-          ctx.arc(facing > 0 ? 3 : -3, -78 - bob, 6, 0, Math.PI * 2);
-          ctx.arc(facing > 0 ? -4 : 4, -77 - bob, 7, 0, Math.PI * 2);
-          ctx.fill();
-        } else {
-          // Traditional Maharashtrian Pheta Turban
-          const pColor = wardrobe.headwear === 'pheta_crimson' ? '#b71c1c' : (wardrobe.headwear === 'pheta_gold' ? '#f59e0b' : '#ea580c');
-          ctx.fillStyle = pColor;
-          ctx.beginPath();
-          ctx.roundRect(-13, -83 - bob, 26, 14, [7, 7, 2, 2]);
-          ctx.fill();
-
-          // Golden Zari Band
-          ctx.fillStyle = '#ffd700';
-          ctx.fillRect(-13, -74 - bob, 26, 3);
-
-          // Kalgi Plume / Crest
-          ctx.fillStyle = '#ffd700';
-          ctx.beginPath();
-          const kalgiX = facing > 0 ? 4 : -4;
-          ctx.moveTo(kalgiX - 3, -83 - bob);
-          ctx.lineTo(kalgiX, -93 - bob);
-          ctx.lineTo(kalgiX + 3, -83 - bob);
-          ctx.closePath();
-          ctx.fill();
-
-          ctx.fillStyle = '#ffffff';
-          ctx.beginPath();
-          ctx.arc(kalgiX, -86 - bob, 1.5, 0, Math.PI * 2);
+          ctx.arc(3.8, -72 - bob, 1.4, 0, Math.PI * 2);
           ctx.fill();
         }
 
@@ -1217,41 +1225,129 @@ export class AssetRegistry {
         ctx.save();
         ctx.translate(x, y);
 
-        // Building Walls (Terracotta / Warm Ochre)
-        ctx.fillStyle = state === '1' ? '#efebe9' : '#fff3e0';
-        ctx.fillRect(-90, -140, 180, 140);
+        const isHouse1 = state === '1';
 
-        // Roof Tiles (Mangalore clay tiles)
-        ctx.fillStyle = '#b71c1c';
+        // 1. Entrance Plinth / Stone Foundation (y: -14 to 0)
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(-105, -7, 210, 7);
+        ctx.fillStyle = '#64748b';
+        ctx.fillRect(-100, -13, 200, 6);
+
+        // 2. Main Ground Floor Structure (y: -85 to -13)
+        ctx.fillStyle = isHouse1 ? '#f8fafc' : '#f1f5f9';
+        ctx.fillRect(-96, -85, 192, 72);
+
+        // Modern Architectural Fluted Wood / Slate Accent Wall Panel
+        ctx.fillStyle = isHouse1 ? '#8d6e63' : '#3b4252';
+        ctx.fillRect(-96, -85, 52, 72);
+
+        // Vertical fluted slats on accent panel
+        ctx.fillStyle = isHouse1 ? '#5d4037' : '#1e293b';
+        for (let sx = -92; sx < -48; sx += 8) {
+          ctx.fillRect(sx, -85, 3, 72);
+        }
+
+        // Ground Floor Modern Large Picture Window
+        ctx.fillStyle = '#0f172a'; // Slim black frame
+        ctx.fillRect(-38, -78, 50, 54);
+        ctx.fillStyle = '#fef08a'; // Warm ambient interior glow
+        ctx.fillRect(-36, -76, 46, 50);
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.22)'; // Glass reflection
+        ctx.fillRect(-36, -76, 46, 50);
+        // Modern thin mullions
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(-14, -76, 2.5, 50);
+        ctx.fillRect(-36, -52, 46, 2.5);
+
+        // Modern Entrance Porch / Canopy (Floating cantilever)
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(18, -88, 76, 7);
+
+        // Modern Grand Entrance Teak Door
+        ctx.fillStyle = '#3e2723';
+        ctx.fillRect(26, -81, 46, 68);
+        ctx.fillStyle = '#4e342e'; // Inner door panel
+        ctx.fillRect(29, -78, 40, 62);
+
+        // Modern Long Vertical Bronze Door Handle
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(63, -56, 3, 24);
+
+        // Exterior Modern Wall Sconce Light (with up/down glow)
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(16, -58, 5, 14);
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(17, -54, 3, 6);
+
+        // 3. Cantilevered Upper Floor / Balcony Level (y: -165 to -85)
+        ctx.fillStyle = isHouse1 ? '#ffffff' : '#f8fafc';
+        ctx.fillRect(-102, -165, 204, 80);
+
+        // Upper floor feature frame / architectural box
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-102, -165, 204, 80);
+
+        // Upper Modern Sliding French Glass Doors
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(-45, -158, 80, 65);
+        ctx.fillStyle = '#fffbeb'; // Soft golden interior warmth
+        ctx.fillRect(-42, -155, 74, 59);
+        // Glass sheen diagonal highlight
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
         ctx.beginPath();
-        ctx.moveTo(-105, -140);
-        ctx.lineTo(0, -185);
-        ctx.lineTo(105, -140);
+        ctx.moveTo(-35, -155);
+        ctx.lineTo(-15, -155);
+        ctx.lineTo(-42, -96);
+        ctx.lineTo(-42, -116);
         ctx.closePath();
         ctx.fill();
+        // Sliding door frame
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(-6, -155, 3, 59);
 
-        // Wooden Balcony / Window
-        ctx.fillStyle = '#5d4037';
-        ctx.fillRect(-24, -120, 48, 40);
-        ctx.fillStyle = '#ffe082'; // Interior warm glow
-        ctx.fillRect(-18, -114, 36, 28);
-        ctx.fillStyle = '#5d4037'; // Window panes
-        ctx.fillRect(-2, -114, 4, 28);
-        ctx.fillRect(-18, -100, 36, 4);
+        // Modern Glass & Steel Balcony Railing (y: -118 to -85)
+        ctx.fillStyle = 'rgba(186, 230, 253, 0.55)'; // Tempered glass panel
+        ctx.fillRect(-85, -118, 160, 30);
+        ctx.strokeStyle = '#94a3b8'; // Top steel handrail
+        ctx.lineWidth = 3;
+        ctx.strokeRect(-85, -118, 160, 30);
+        // Stainless steel mounting posts
+        ctx.fillStyle = '#64748b';
+        [-83, -32, 20, 72].forEach(px => {
+          ctx.fillRect(px, -118, 3, 30);
+        });
 
-        // Front Door
-        ctx.fillStyle = '#4e342e';
-        ctx.fillRect(-20, -56, 40, 56);
-        ctx.fillStyle = '#ffd700'; // Brass knocker
-        ctx.beginPath();
-        ctx.arc(10, -28, 3, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Toran above door
-        ctx.fillStyle = '#ff9800';
-        for (let tx = -22; tx <= 22; tx += 6) {
+        // Balcony Planter Box with green foliage
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(-80, -96, 50, 10);
+        ctx.fillStyle = '#16a34a';
+        for (let bx = -78; bx <= -34; bx += 8) {
           ctx.beginPath();
-          ctx.arc(tx, -58, 2.5, 0, Math.PI * 2);
+          ctx.arc(bx, -97, 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // 4. Roof Terrace & Pergola (y: -192 to -165)
+        // Modern parapet wall
+        ctx.fillStyle = isHouse1 ? '#e2e8f0' : '#cbd5e1';
+        ctx.fillRect(-106, -172, 212, 8);
+
+        // Modern Architectural Pergola Wooden Beams (Rooftop Trellis)
+        ctx.fillStyle = '#5d4037';
+        ctx.fillRect(-85, -192, 6, 20);
+        ctx.fillRect(75, -192, 6, 20);
+        ctx.fillRect(-90, -194, 175, 5);
+        for (let bx = -80; bx <= 70; bx += 22) {
+          ctx.fillRect(bx, -192, 4, 18);
+        }
+
+        // 5. Festive Mango Leaf & Marigold Toran above entrance
+        const toranColors = ['#f59e0b', '#e11d48', '#10b981', '#fbbf24'];
+        for (let tx = 22; tx <= 72; tx += 6) {
+          ctx.fillStyle = toranColors[Math.floor(Math.abs(tx) / 6) % toranColors.length];
+          ctx.beginPath();
+          ctx.arc(tx, -84, 3, 0, Math.PI * 2);
           ctx.fill();
         }
 
@@ -1311,63 +1407,155 @@ export class AssetRegistry {
         ctx.save();
         ctx.translate(x, y);
 
-        // Perspective flat ellipse on street floor
+        // Perspective flat ellipse on street road floor
         ctx.scale(1, 0.45);
 
-        // Outer white chalk dots ring
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([4, 6]);
-        ctx.beginPath();
-        ctx.arc(0, 0, 54, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        // Outer Vermilion Petals
-        const petals = 12;
-        for (let i = 0; i < petals; i++) {
-          const angle = (i * Math.PI * 2) / petals;
-          ctx.fillStyle = i % 2 === 0 ? '#d50000' : '#ff6d00';
+        if (state === '2') {
+          // Pattern 2: Peacock Emerald Star Mandala
+          // Outer white chalk dots ring
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([4, 5]);
           ctx.beginPath();
-          ctx.arc(Math.cos(angle) * 40, Math.sin(angle) * 40, 10, 0, Math.PI * 2);
+          ctx.arc(0, 0, 56, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Peacock blue outer petals
+          const petals = 10;
+          for (let i = 0; i < petals; i++) {
+            const angle = (i * Math.PI * 2) / petals;
+            ctx.fillStyle = i % 2 === 0 ? '#0284c7' : '#06b6d4';
+            ctx.beginPath();
+            ctx.arc(Math.cos(angle) * 42, Math.sin(angle) * 42, 11, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          // Emerald Green Ring
+          ctx.fillStyle = '#059669';
+          ctx.beginPath();
+          ctx.arc(0, 0, 32, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Saffron Gold Inner Star
+          ctx.fillStyle = '#f59e0b';
+          ctx.beginPath();
+          for (let i = 0; i < 8; i++) {
+            const r = i % 2 === 0 ? 22 : 11;
+            const a = (i * Math.PI) / 4;
+            const px = Math.cos(a) * r;
+            const py = Math.sin(a) * r;
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }
+          ctx.closePath();
+          ctx.fill();
+
+          // Chalk white center ring
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(0, 0, 8, 0, Math.PI * 2);
+          ctx.stroke();
+
+          // Center ruby bindu
+          ctx.fillStyle = '#e11d48';
+          ctx.beginPath();
+          ctx.arc(0, 0, 5, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (state === '3') {
+          // Pattern 3: Royal Magenta & Turmeric Lotus Rangoli
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([5, 5]);
+          ctx.beginPath();
+          ctx.arc(0, 0, 58, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Magenta & Pink Lotus Petals
+          const petals = 12;
+          for (let i = 0; i < petals; i++) {
+            const angle = (i * Math.PI * 2) / petals;
+            ctx.fillStyle = i % 2 === 0 ? '#c026d3' : '#ec4899';
+            ctx.beginPath();
+            ctx.arc(Math.cos(angle) * 43, Math.sin(angle) * 43, 10, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          // Turmeric yellow ring
+          ctx.fillStyle = '#fbbf24';
+          ctx.beginPath();
+          ctx.arc(0, 0, 32, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Crimson Lotus Heart
+          ctx.fillStyle = '#dc2626';
+          ctx.beginPath();
+          ctx.arc(0, 0, 20, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Golden center flower
+          ctx.fillStyle = '#fef08a';
+          ctx.beginPath();
+          ctx.arc(0, 0, 8, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          // Pattern 1: Classic Grand Vermilion Diya Kolam
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([4, 6]);
+          ctx.beginPath();
+          ctx.arc(0, 0, 54, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Outer Vermilion Petals
+          const petals = 12;
+          for (let i = 0; i < petals; i++) {
+            const angle = (i * Math.PI * 2) / petals;
+            ctx.fillStyle = i % 2 === 0 ? '#d50000' : '#ff6d00';
+            ctx.beginPath();
+            ctx.arc(Math.cos(angle) * 40, Math.sin(angle) * 40, 10, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          // Mid Ring - Turmeric Gold & Peacock Green
+          ctx.fillStyle = '#ffd600';
+          ctx.beginPath();
+          ctx.arc(0, 0, 32, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#00bfa5';
+          ctx.beginPath();
+          ctx.arc(0, 0, 22, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Inner Sacred Star
+          ctx.fillStyle = '#7b1fa2';
+          ctx.beginPath();
+          for (let i = 0; i < 8; i++) {
+            const r = i % 2 === 0 ? 16 : 8;
+            const a = (i * Math.PI) / 4;
+            const px = Math.cos(a) * r;
+            const py = Math.sin(a) * r;
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }
+          ctx.closePath();
+          ctx.fill();
+
+          // Center Diya Base & Flame
+          ctx.fillStyle = '#b71c1c';
+          ctx.beginPath();
+          ctx.arc(0, 0, 6, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#fff59d';
+          ctx.beginPath();
+          ctx.arc(0, 0, 3, 0, Math.PI * 2);
           ctx.fill();
         }
-
-        // Mid Ring - Turmeric Gold & Peacock Green
-        ctx.fillStyle = '#ffd600';
-        ctx.beginPath();
-        ctx.arc(0, 0, 32, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#00bfa5';
-        ctx.beginPath();
-        ctx.arc(0, 0, 22, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Inner Sacred Star
-        ctx.fillStyle = '#7b1fa2';
-        ctx.beginPath();
-        for (let i = 0; i < 8; i++) {
-          const r = i % 2 === 0 ? 16 : 8;
-          const a = (i * Math.PI) / 4;
-          const px = Math.cos(a) * r;
-          const py = Math.sin(a) * r;
-          if (i === 0) ctx.moveTo(px, py);
-          else ctx.lineTo(px, py);
-        }
-        ctx.closePath();
-        ctx.fill();
-
-        // Center Diya Base & Flame
-        ctx.fillStyle = '#b71c1c';
-        ctx.beginPath();
-        ctx.arc(0, 0, 6, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#fff59d';
-        ctx.beginPath();
-        ctx.arc(0, 0, 3, 0, Math.PI * 2);
-        ctx.fill();
 
         ctx.restore();
       }

@@ -298,30 +298,51 @@ export class StreetScene {
     // Handle Active Mini-games
     if (this.bambooMinigame.active) {
       this.bambooMinigame.update(dt, input, this.game.particles);
+      if (!this.bambooMinigame.active && !this.game.dialogue.active) {
+        this.player.canMove = true;
+      }
       return;
     }
     if (this.flowerMinigame.active) {
       this.flowerMinigame.update(dt, input, this.game.particles);
+      if (!this.flowerMinigame.active && !this.game.dialogue.active) {
+        this.player.canMove = true;
+      }
       return;
     }
     if (this.wiringMinigame.active) {
       this.wiringMinigame.update(dt, input, this.game.particles);
+      if (!this.wiringMinigame.active && !this.game.dialogue.active) {
+        this.player.canMove = true;
+      }
       return;
     }
     if (this.generatorMinigame.active) {
       this.generatorMinigame.update(dt, input, this.game.particles);
+      if (!this.generatorMinigame.active && !this.game.dialogue.active) {
+        this.player.canMove = true;
+      }
       return;
     }
     if (this.liftMinigame.active) {
       this.liftMinigame.update(dt, input, this.game.particles, this.game.camera);
+      if (!this.liftMinigame.active && !this.game.dialogue.active) {
+        this.player.canMove = true;
+      }
       return;
     }
     if (this.modakMinigame.active) {
       this.modakMinigame.update(dt, input, this.game.particles);
+      if (!this.modakMinigame.active && !this.game.dialogue.active) {
+        this.player.canMove = true;
+      }
       return;
     }
     if (this.aartiRitual.active) {
       this.aartiRitual.update(dt, input, this.game.particles);
+      if (!this.aartiRitual.active && !this.game.dialogue.active) {
+        this.player.canMove = true;
+      }
       return;
     }
     if (this.mandapamCollapseCinematic.active) {
@@ -364,7 +385,7 @@ export class StreetScene {
     this.ganesha.update(dt);
     this.npcs.forEach(npc => npc.update(dt, this.player.x));
 
-    this.game.camera.follow(this.player);
+    this.game.camera.follow(this.player, this.game.input.isMobile);
 
     // Contextual Interactions
     this.handleInteractions(input);
@@ -598,19 +619,29 @@ export class StreetScene {
     // 3. World Entities (In Camera Coordinates)
     this.game.camera.begin(ctx);
 
-    // Stone ground
+    // Authentic Street Road Ground
     this.game.parallax.renderGround(ctx, this.game.camera);
-
-    // Rangoli Ground Floor Art
-    this.game.assetRegistry.draw(ctx, 'RANGOLI_ART', 450, 542, 120, 50, '1', 1, this.game.dayNight.time);
-    this.game.assetRegistry.draw(ctx, 'RANGOLI_ART', 950, 542, 120, 50, '2', 1, this.game.dayNight.time);
-    this.game.assetRegistry.draw(ctx, 'RANGOLI_ART', 1400, 542, 140, 55, '3', 1, this.game.dayNight.time);
 
     // Buildings & Props
     this.game.assetRegistry.draw(ctx, 'HOUSE_SPRITE', 450, 540, 220, 200, '1');
     this.game.assetRegistry.draw(ctx, 'HOUSE_SPRITE', 950, 540, 220, 200, '2');
     this.game.assetRegistry.draw(ctx, 'TEMPLE_SPRITE', 1800, 540, 260, 280);
     this.game.assetRegistry.draw(ctx, 'GENERATOR_SPRITE', 2100, 540, 70, 55, this.generatorState);
+
+    // Sacred Mandapam & Ganesha
+    this.mandapam.render(ctx);
+    this.ganesha.render(ctx);
+
+    // Rangoli Road Art (Drawn directly in front of each house and landmark on the road!)
+    const roadRangolis = [
+      { x: 450, y: 576, w: 135, h: 54, pattern: '1' }, // Directly in front of House 1 entrance!
+      { x: 950, y: 576, w: 135, h: 54, pattern: '2' }, // Directly in front of House 2 entrance!
+      { x: 1400, y: 585, w: 145, h: 58, pattern: '1' }, // Grand road rangoli in front of Mandapam!
+      { x: 1800, y: 576, w: 140, h: 56, pattern: '3' }  // Directly in front of Temple entrance!
+    ];
+    roadRangolis.forEach(r => {
+      this.game.assetRegistry.draw(ctx, 'RANGOLI_ART', r.x, r.y, r.w, r.h, r.pattern, 1, this.game.dayNight.time);
+    });
 
     // Hanging Festive Kandil Lanterns from eaves
     this.game.assetRegistry.draw(ctx, 'KANDIL_LANTERN', 390, 365, 36, 75, 'gold', 1, this.game.dayNight.time);
@@ -626,10 +657,6 @@ export class StreetScene {
     streetLampX.forEach(lx => {
       this.game.assetRegistry.draw(ctx, 'STREET_LAMP', lx, 540, 32, 180, isNight ? 'lit' : 'unlit', 1, this.game.dayNight.time);
     });
-
-    // Sacred Mandapam & Ganesha
-    this.mandapam.render(ctx);
-    this.ganesha.render(ctx);
 
     // NPCs
     this.npcs.forEach(npc => npc.render(ctx));
@@ -709,7 +736,6 @@ export class StreetScene {
       (this.liftMinigame && this.liftMinigame.active) ||
       (this.modakMinigame && this.modakMinigame.active) ||
       (this.aartiRitual && this.aartiRitual.active) ||
-      (this.stormProtection && this.stormProtection.active) ||
       (this.mandapamCollapseCinematic && this.mandapamCollapseCinematic.active) ||
       (this.lightUpCinematic && this.lightUpCinematic.active) ||
       (this.ganeshaRevealCinematic && this.ganeshaRevealCinematic.active) ||

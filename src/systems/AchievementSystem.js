@@ -125,10 +125,11 @@ export class AchievementSystem {
     }
 
     if (this.showModal && input) {
-      if (input.interactPressed || (input.mouse.justPressed && (input.mouse.x > 980 || input.mouse.x < 300 || input.mouse.y < 90 || input.mouse.y > 630))) {
+      if (input.interactPressed || (input.mouse && input.mouse.justPressed && (input.mouse.x > 980 || input.mouse.x < 300 || input.mouse.y < 90 || input.mouse.y > 630 || (input.mouse.x >= 930 && input.mouse.x <= 980 && input.mouse.y >= 90 && input.mouse.y <= 135)))) {
         this.showModal = false;
         input.interactPressed = false;
         if (input.mouse) input.mouse.justPressed = false;
+        audioManager.playSnap();
       }
     }
   }
@@ -197,6 +198,20 @@ export class AchievementSystem {
     ctx.strokeStyle = '#ffd700';
     ctx.lineWidth = 2.5;
     ctx.stroke();
+
+    // Close Button [X]
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.roundRect(935, 95, 40, 36, 8);
+    ctx.fill();
+    ctx.strokeStyle = '#ffd54f';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✕', 955, 119);
 
     // Header
     ctx.fillStyle = '#ffffff';
