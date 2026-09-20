@@ -19,28 +19,20 @@
     </div>
     <script type="module" src="/src/main.js"></script>
     <script>
-      // Service worker management: clear obsolete caches & keep live builds in sync
+      // Clean up legacy service workers & stale browser caches automatically
       if ('serviceWorker' in navigator) {
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-          navigator.serviceWorker.getRegistrations().then((regs) => {
-            for (let reg of regs) reg.unregister();
-          });
-          if (window.caches) {
-            caches.keys().then((keys) => {
-              for (let k of keys) caches.delete(k);
-            });
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          for (const reg of registrations) {
+            reg.unregister();
           }
-        } else if (window.location.protocol.startsWith('http')) {
-          // Immediately purge old broken cache versions if present
-          if (window.caches) {
-            caches.delete('ganesh-quest-v1').catch(() => {});
+        });
+      }
+      if ('caches' in window) {
+        caches.keys().then((keys) => {
+          for (const key of keys) {
+            caches.delete(key);
           }
-          window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js').then((reg) => {
-              reg.update();
-            }).catch(() => {});
-          });
-        }
+        });
       }
     </script>
   </body>
