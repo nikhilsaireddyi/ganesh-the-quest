@@ -38,6 +38,9 @@ export class PhotoMode {
   }
 
   enter() {
+    if (this.game && typeof this.game.isGameplayScene === 'function') {
+      if (!this.game.isGameplayScene()) return;
+    }
     this.active = true;
     audioManager.playSnap();
   }
@@ -47,42 +50,51 @@ export class PhotoMode {
     audioManager.playSnap();
   }
 
-  capture(canvas) {
-    if (!canvas) return;
-
+  capture() {
     this.flashAlpha = 1.0;
     audioManager.playShutter();
 
     try {
-      // Create offscreen canvas for polaroid framing
-      const polaroid = document.createElement('canvas');
-      polaroid.width = 640;
-      polaroid.height = 420;
-      const pctx = polaroid.getContext('2d');
+      // 1. Capture pristine, clean game scene at full resolution (1280x720) without viewfinder or HUD
+      let cleanCanvas = null;
+      if (this.game && typeof this.game.captureCleanScreenshot === 'function') {
+        cleanCanvas = this.game.captureCleanScreenshot();
+      } else if (this.game && this.game.canvas) {
+        cleanCanvas = this.game.canvas;
+      }
 
-      // Cream Polaroid Card
-      pctx.fillStyle = '#fdfbf7';
-      pctx.fillRect(0, 0, 640, 420);
-      pctx.strokeStyle = '#e2d9cc';
-      pctx.lineWidth = 4;
-      pctx.strokeRect(2, 2, 636, 416);
+      if (!cleanCanvas) return;
 
-      // Snapshot image inside
-      pctx.drawImage(canvas, 20, 20, 600, 337);
+      const vw = cleanCanvas.width || (this.game ? this.game.virtualWidth : 1280);
+      const vh = cleanCanvas.height || (this.game ? this.game.virtualHeight : 720);
 
-      // Decorative handwritten caption
-      pctx.fillStyle = '#2d241e';
-      pctx.font = 'italic bold 18px serif';
-      pctx.textAlign = 'left';
-      pctx.fillText('✨ Ganeshotsav Memories • Pune', 25, 385);
+      // 2. Create full-resolution output canvas
+      const fullPic = document.createElement('canvas');
+      fullPic.width = vw;
+      fullPic.height = vh;
+      const pctx = fullPic.getContext('2d');
 
-      pctx.fillStyle = '#b45309';
-      pctx.font = '13px sans-serif';
-      pctx.textAlign = 'right';
+      // Draw the complete, uncropped clean game world
+      pctx.drawImage(cleanCanvas, 0, 0, vw, vh);
+
+      // Subtle elegant festival watermark in bottom-right corner
       const now = new Date();
-      pctx.fillText(`${now.toLocaleDateString()} • Auspicious Festival`, 615, 385);
+      pctx.save();
+      pctx.fillStyle = 'rgba(15, 23, 42, 0.68)';
+      pctx.beginPath();
+      pctx.roundRect(vw - 360, vh - 44, 342, 32, 6);
+      pctx.fill();
+      pctx.strokeStyle = 'rgba(255, 215, 0, 0.7)';
+      pctx.lineWidth = 1;
+      pctx.stroke();
 
-      const dataUrl = polaroid.toDataURL('image/jpeg', 0.85);
+      pctx.fillStyle = '#ffd54f';
+      pctx.font = 'bold 13px sans-serif';
+      pctx.textAlign = 'right';
+      pctx.fillText(`✨ Ganesh: The Quest • ${now.toLocaleDateString()}`, vw - 26, vh - 23);
+      pctx.restore();
+
+      const dataUrl = fullPic.toDataURL('image/jpeg', 0.92);
 
       this.photos.unshift({
         id: Date.now(),
@@ -100,7 +112,7 @@ export class PhotoMode {
     if (!photo || !photo.dataUrl) return;
     const a = document.createElement('a');
     a.href = photo.dataUrl;
-    a.download = `ganesh-quest-${photo.id}.jpg`;
+    a.download = `ganesh-quest-photo-${photo.id}.jpg`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -114,20 +126,20 @@ export class PhotoMode {
 
     if (this.active) {
       if (input.interactPressed || (input.keys && input.keys['KeyC'])) {
-        this.capture(this.game.canvas);
+        this.capture();
         input.interactPressed = false;
         if (input.keys) input.keys['KeyC'] = false;
       }
 
-      const vw = this.engine ? this.engine.virtualWidth : 1280;
-      const vh = this.engine ? this.engine.virtualHeight : 720;
+      const vw = this.game ? this.game.virtualWidth : 1280;
+      const vh = this.game ? this.game.virtualHeight : 720;
       const cx = vw / 2;
 
       const mouse = input.mouse;
       if (mouse && mouse.justPressed) {
         // Shutter button (center bottom: cx, vh - 75, radius: 42)
         if (Math.hypot(mouse.x - cx, mouse.y - (vh - 75)) <= 42) {
-          this.capture(this.game.canvas);
+          this.capture();
           mouse.justPressed = false;
           return;
         }
@@ -168,14 +180,14 @@ export class PhotoMode {
 
         // If inspecting single photo
         if (this.selectedPhoto) {
-          // Download button
-          if (mx >= 520 && mx <= 660 && my >= 575 && my <= 620) {
+          // Download button (x: 510 to 670, y: 555 to 605)
+          if (mx >= 510 && mx <= 670 && my >= 555 && my <= 605) {
             this.downloadPhoto(this.selectedPhoto);
             mouse.justPressed = false;
             return;
           }
-          // Back to gallery
-          if (mx >= 680 && mx <= 760 && my >= 575 && my <= 620) {
+          // Back to gallery (x: 680 to 770, y: 555 to 605)
+          if (mx >= 680 && mx <= 770 && my >= 555 && my <= 605) {
             this.selectedPhoto = null;
             audioManager.playSnap();
             mouse.justPressed = false;
@@ -186,10 +198,10 @@ export class PhotoMode {
 
         // Check clicking on polaroid cards in gallery
         const startX = 220;
-        const startY = 150;
+        const startY = 130;
         const cardW = 200;
-        const cardH = 150;
-        const gapX = 20;
+        const cardH = 155;
+        const gapX = 22;
         const gapY = 25;
 
         this.photos.forEach((photo, i) => {
@@ -217,8 +229,8 @@ export class PhotoMode {
   renderViewfinder(ctx) {
     if (!this.active) return;
 
-    const vw = this.engine ? this.engine.virtualWidth : 1280;
-    const vh = this.engine ? this.engine.virtualHeight : 720;
+    const vw = this.game ? this.game.virtualWidth : 1280;
+    const vh = this.game ? this.game.virtualHeight : 720;
     const cx = vw / 2;
     const cy = vh / 2;
 
@@ -334,8 +346,8 @@ export class PhotoMode {
 
   renderFlash(ctx) {
     if (this.flashAlpha > 0.01) {
-      const vw = this.engine ? this.engine.virtualWidth : 1280;
-      const vh = this.engine ? this.engine.virtualHeight : 720;
+      const vw = this.game ? this.game.virtualWidth : 1280;
+      const vh = this.game ? this.game.virtualHeight : 720;
       ctx.save();
       ctx.fillStyle = `rgba(255, 255, 255, ${this.flashAlpha})`;
       ctx.fillRect(0, 0, vw, vh);
@@ -351,6 +363,7 @@ export class PhotoMode {
     const my = 55;
     const mw = 920;
     const mh = 610;
+    const cx = mx + mw / 2;
 
     // Album Frame
     ctx.fillStyle = '#0f172a';
@@ -365,7 +378,7 @@ export class PhotoMode {
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 26px serif';
     ctx.textAlign = 'center';
-    ctx.fillText('📖 FESTIVAL MEMORIES SCRAPBOOK', mx + mw / 2, my + 44);
+    ctx.fillText('📖 FESTIVAL MEMORIES SCRAPBOOK', cx, my + 44);
 
     // Close button [X]
     const btnX = mx + mw - 55;
@@ -385,39 +398,53 @@ export class PhotoMode {
 
     // If viewing single enlarged photo
     if (this.selectedPhoto) {
+      const imgW = 720;
+      const imgH = 405; // 16:9 ratio
+      const imgX = cx - imgW / 2;
+      const imgY = my + 75;
+
+      // Outer gold frame
+      ctx.fillStyle = '#020617';
+      ctx.beginPath();
+      ctx.roundRect(imgX - 6, imgY - 6, imgW + 12, imgH + 12, 10);
+      ctx.fill();
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
       if (this.selectedPhoto._img) {
-        ctx.drawImage(this.selectedPhoto._img, 340, 130, 600, 394);
+        ctx.drawImage(this.selectedPhoto._img, imgX, imgY, imgW, imgH);
       } else {
         const img = new Image();
         img.src = this.selectedPhoto.dataUrl;
         img.onload = () => { this.selectedPhoto._img = img; };
         ctx.fillStyle = '#1e293b';
-        ctx.fillRect(340, 130, 600, 394);
+        ctx.fillRect(imgX, imgY, imgW, imgH);
       }
 
       // Download Button
       ctx.fillStyle = '#16a34a';
       ctx.beginPath();
-      ctx.roundRect(520, 560, 140, 40, 8);
+      ctx.roundRect(510, 555, 155, 42, 8);
       ctx.fill();
       ctx.strokeStyle = '#86efac';
       ctx.lineWidth = 1.5;
       ctx.stroke();
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 14px sans-serif';
-      ctx.fillText('SAVE 💾', 590, 585);
+      ctx.fillText('SAVE FULL PHOTO 💾', 587, 581);
 
       // Back Button
       ctx.fillStyle = '#334155';
       ctx.beginPath();
-      ctx.roundRect(680, 560, 100, 40, 8);
+      ctx.roundRect(680, 555, 100, 42, 8);
       ctx.fill();
       ctx.strokeStyle = '#94a3b8';
       ctx.lineWidth = 1.5;
       ctx.stroke();
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 14px sans-serif';
-      ctx.fillText('BACK ↩', 730, 585);
+      ctx.fillText('BACK ↩', 730, 581);
 
       ctx.restore();
       return;
@@ -426,12 +453,12 @@ export class PhotoMode {
     if (this.photos.length === 0) {
       ctx.fillStyle = '#94a3b8';
       ctx.font = 'italic 18px sans-serif';
-      ctx.fillText('No photos yet! Click [📸 PHOTO] during your quest to capture memories.', mx + mw / 2, 340);
+      ctx.fillText('No photos yet! Click [📸 PHOTO] during your quest to capture memories.', cx, 340);
       ctx.restore();
       return;
     }
 
-    // Grid of captured polaroids
+    // Grid of captured full-size photographs (16:9 thumbnails)
     const startX = 220;
     const startY = 130;
     const cardW = 200;
@@ -445,28 +472,33 @@ export class PhotoMode {
       const px = startX + col * (cardW + gapX);
       const py = startY + row * (cardH + gapY);
 
-      // Polaroid Card frame
-      ctx.fillStyle = '#fdfbf7';
+      // Photo Card frame
+      ctx.fillStyle = '#1e293b';
       ctx.beginPath();
-      ctx.roundRect(px, py, cardW, cardH, 6);
+      ctx.roundRect(px, py, cardW, cardH, 8);
       ctx.fill();
-      ctx.strokeStyle = '#d6cbbe';
+      ctx.strokeStyle = '#38bdf8';
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
+      const imgW = cardW - 14;
+      const imgH = 104;
+
       if (photo._img) {
-        ctx.drawImage(photo._img, px + 8, py + 8, cardW - 16, cardH - 36);
+        ctx.drawImage(photo._img, px + 7, py + 7, imgW, imgH);
       } else {
         const img = new Image();
         img.src = photo.dataUrl;
         img.onload = () => { photo._img = img; };
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(px + 7, py + 7, imgW, imgH);
       }
 
       // Caption
-      ctx.fillStyle = '#451a03';
-      ctx.font = 'bold 10px sans-serif';
+      ctx.fillStyle = '#ffd54f';
+      ctx.font = 'bold 11px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(`Snapshot #${this.photos.length - i}`, px + cardW / 2, py + cardH - 10);
+      ctx.fillText(`✨ Snapshot #${this.photos.length - i}`, px + cardW / 2, py + cardH - 12);
     });
 
     ctx.fillStyle = '#ffd54f';

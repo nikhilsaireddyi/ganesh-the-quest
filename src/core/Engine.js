@@ -181,28 +181,38 @@ export class Engine {
   }
 
   update(dt) {
-    // 0. Photo Mode updates
-    const modalInput = this.getModalInputProxy(this.input);
-    if (this.photoMode.showScrapbook) {
-      this.photoMode.update(dt, modalInput);
-    } else {
-      this.photoMode.update(dt, this.input);
-    }
-    if (this.photoMode.active || this.photoMode.showScrapbook) {
-      return; // Freeze scene while framing or browsing scrapbook
-    }
+    const isGameplay = this.isGameplayScene();
 
-    // 1. Wardrobe & Achievements modals
-    if (this.wardrobe.showModal) {
-      this.wardrobe.update(dt, modalInput);
-    } else {
-      this.wardrobe.update(dt, this.input);
-    }
+    if (isGameplay) {
+      // 0. Photo Mode updates
+      const modalInput = this.getModalInputProxy(this.input);
+      if (this.photoMode.showScrapbook) {
+        this.photoMode.update(dt, modalInput);
+      } else {
+        this.photoMode.update(dt, this.input);
+      }
+      if (this.photoMode.active || this.photoMode.showScrapbook) {
+        return; // Freeze scene while framing or browsing scrapbook
+      }
 
-    if (this.achievements.showModal) {
-      this.achievements.update(dt, modalInput);
+      // 1. Wardrobe & Achievements modals
+      if (this.wardrobe.showModal) {
+        this.wardrobe.update(dt, modalInput);
+      } else {
+        this.wardrobe.update(dt, this.input);
+      }
+
+      if (this.achievements.showModal) {
+        this.achievements.update(dt, modalInput);
+      } else {
+        this.achievements.update(dt, this.input);
+      }
     } else {
-      this.achievements.update(dt, this.input);
+      // On non-gameplay scenes (Title, Intro, Ending), enforce closed modals
+      if (this.photoMode.active) this.photoMode.active = false;
+      if (this.photoMode.showScrapbook) this.photoMode.showScrapbook = false;
+      if (this.wardrobe.showModal) this.wardrobe.showModal = false;
+      if (this.achievements.showModal) this.achievements.showModal = false;
     }
 
     // 2. Camera
@@ -219,6 +229,31 @@ export class Engine {
 
     // 5. Active Scene (always update so transitions fade out and scene progresses)
     this.sceneManager.update(dt, this.input);
+  }
+
+  isGameplayScene() {
+    const activeKey = this.sceneManager ? this.sceneManager.currentSceneKey : '';
+    return activeKey === 'street' || activeKey === 'procession';
+  }
+
+  captureCleanScreenshot() {
+    const vw = this.virtualWidth || 1280;
+    const vh = this.virtualHeight || 720;
+    const snapCanvas = document.createElement('canvas');
+    snapCanvas.width = vw;
+    snapCanvas.height = vh;
+    const sctx = snapCanvas.getContext('2d');
+
+    this.isCapturingPhoto = true;
+    try {
+      if (this.sceneManager && this.sceneManager.currentScene) {
+        this.sceneManager.currentScene.render(sctx);
+      }
+    } finally {
+      this.isCapturingPhoto = false;
+    }
+
+    return snapCanvas;
   }
 
   isUIBlocked() {
@@ -257,27 +292,31 @@ export class Engine {
     // 1. Render Active Scene
     this.sceneManager.render(this.ctx);
 
+    const isGameplay = this.isGameplayScene();
+
     // 2. Render Touch Controls (only during active world gameplay, never during dialogue/modals)
-    if (!this.isUIBlocked()) {
+    if (isGameplay && !this.isUIBlocked()) {
       this.input.renderTouchControls(this.ctx);
     }
 
-    // 3. Photo Mode Viewfinder & Flash
-    this.photoMode.renderViewfinder(this.ctx);
-    this.photoMode.renderFlash(this.ctx);
+    if (isGameplay) {
+      // 3. Photo Mode Viewfinder & Flash
+      this.photoMode.renderViewfinder(this.ctx);
+      this.photoMode.renderFlash(this.ctx);
 
-    // 4. Achievements Toast notifications
-    this.achievements.renderToasts(this.ctx);
+      // 4. Achievements Toast notifications
+      this.achievements.renderToasts(this.ctx);
 
-    // 5. Modals (Wardrobe, Badges, Scrapbook)
-    if (this.wardrobe.showModal) {
-      this.renderCenteredModal(this.ctx, () => this.wardrobe.renderModal(this.ctx));
-    }
-    if (this.achievements.showModal) {
-      this.renderCenteredModal(this.ctx, () => this.achievements.renderModal(this.ctx));
-    }
-    if (this.photoMode.showScrapbook) {
-      this.renderCenteredModal(this.ctx, () => this.photoMode.renderScrapbook(this.ctx));
+      // 5. Modals (Wardrobe, Badges, Scrapbook)
+      if (this.wardrobe.showModal) {
+        this.renderCenteredModal(this.ctx, () => this.wardrobe.renderModal(this.ctx));
+      }
+      if (this.achievements.showModal) {
+        this.renderCenteredModal(this.ctx, () => this.achievements.renderModal(this.ctx));
+      }
+      if (this.photoMode.showScrapbook) {
+        this.renderCenteredModal(this.ctx, () => this.photoMode.renderScrapbook(this.ctx));
+      }
     }
 
     this.ctx.restore();

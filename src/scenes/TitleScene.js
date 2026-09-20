@@ -15,6 +15,19 @@ export class TitleScene {
   enter() {
     this.animTime = 0;
     audioManager.playMusicTheme('CALM');
+
+    // Ensure all gameplay modals and photo mode are closed on title screen
+    if (this.game) {
+      if (this.game.photoMode) {
+        this.game.photoMode.active = false;
+        this.game.photoMode.showScrapbook = false;
+      }
+      if (this.game.wardrobe) this.game.wardrobe.showModal = false;
+      if (this.game.achievements) this.game.achievements.showModal = false;
+      if (this.game.ui) {
+        this.game.ui.isPaused = false;
+      }
+    }
   }
 
   exit() {}
@@ -27,6 +40,11 @@ export class TitleScene {
     // Continuous subtle floating petals
     if (Math.random() < 0.2) {
       this.game.particles.emitPetals(Math.random() * this.game.virtualWidth, -20, 2);
+    }
+
+    // CRITICAL: Block all Main Menu clicks when a modal (Credits / Settings) is active!
+    if (this.game && this.game.ui && (this.game.ui.showCredits || this.game.ui.showSettings)) {
+      return;
     }
 
     const mouse = input.mouse;

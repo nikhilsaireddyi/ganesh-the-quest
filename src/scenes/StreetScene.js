@@ -817,7 +817,11 @@ export class StreetScene {
     }
     this.game.lighting.render(ctx, this.game.camera, ambientDark);
 
-    // 6. UI & HUD Overlay
+    // 6. UI & HUD Overlay (skip when capturing clean full photo)
+    if (this.game && this.game.isCapturingPhoto) {
+      return;
+    }
+
     const mission = this.game.missions.getCurrentMission();
     this.game.ui.renderHUD(ctx, mission, this.player.x, this.player.isSprinting);
     this.renderDirectionArrow(ctx);

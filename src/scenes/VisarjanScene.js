@@ -197,30 +197,63 @@ export class VisarjanScene {
   }
 
   render(ctx) {
-    // 1. Sky & Celestial Backdrop (Screen space)
-    this.game.dayNight.renderSky(ctx, this.game.virtualWidth, this.game.virtualHeight);
+    // 1. Sky & Celestial Backdrop (Screen space - pass false so celestial orb isn't duplicated)
+    this.game.dayNight.renderSky(ctx, this.game.virtualWidth, this.game.virtualHeight, false);
 
     // 2. World Elements transformed by Camera (Pan from Shore to Deep Water)
     this.game.camera.begin(ctx);
 
-    // (A) Parallax Far Shore & Opposite River Bank
+    // (A) Parallax Far Shore & Opposite River Bank with soft moonlit ambient silhouette
     ctx.save();
-    ctx.fillStyle = '#0a192f';
-    ctx.fillRect(-300, 420, 2500, 95);
+    // Distant mountain ridge silhouette catching subtle moonlit edge
+    ctx.fillStyle = '#0f1d33';
+    ctx.beginPath();
+    ctx.moveTo(-300, 440);
+    for (let mx = -300; mx <= 2300; mx += 200) {
+      ctx.quadraticCurveTo(mx + 100, 395 + Math.sin(mx * 0.01) * 18, mx + 200, 440);
+    }
+    ctx.lineTo(2300, 520);
+    ctx.lineTo(-300, 520);
+    ctx.closePath();
+    ctx.fill();
 
-    // Far bank temple domes & trees silhouettes
-    ctx.fillStyle = '#0d233a';
-    for (let bx = -200; bx < 2200; bx += 140) {
+    // Far bank terrain
+    const bankGrad = ctx.createLinearGradient(0, 415, 0, 515);
+    bankGrad.addColorStop(0, '#152945');
+    bankGrad.addColorStop(1, '#0c1728');
+    ctx.fillStyle = bankGrad;
+    ctx.fillRect(-300, 425, 2600, 92);
+
+    // Far bank temple domes, shikharas & banyan tree silhouettes
+    ctx.fillStyle = '#1b3354';
+    for (let bx = -200; bx < 2200; bx += 130) {
+      // Tree / dome
       ctx.beginPath();
-      ctx.arc(bx, 430, 22, Math.PI, Math.PI * 2);
+      ctx.arc(bx, 430, 24, Math.PI, Math.PI * 2);
       ctx.fill();
+
+      // Temple shikhara spire every 390px
+      if (Math.abs(bx) % 390 === 0) {
+        ctx.beginPath();
+        ctx.moveTo(bx - 12, 430);
+        ctx.lineTo(bx, 396);
+        ctx.lineTo(bx + 12, 430);
+        ctx.closePath();
+        ctx.fill();
+        // Golden kalash top
+        ctx.fillStyle = '#ffd54f';
+        ctx.beginPath();
+        ctx.arc(bx, 394, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#1b3354';
+      }
     }
 
     // Distant oil diyas on opposite bank
-    for (let dx = -200; dx < 2200; dx += 80) {
+    for (let dx = -200; dx < 2200; dx += 75) {
       ctx.fillStyle = '#ffb300';
       ctx.beginPath();
-      ctx.arc(dx, 475, 2, 0, Math.PI * 2);
+      ctx.arc(dx, 474, 2, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.restore();
@@ -466,23 +499,40 @@ export class VisarjanScene {
 
     this.game.camera.end(ctx);
 
-    // 3. Atmospheric Lighting Pass
+    // 3. Atmospheric Lighting Pass (Soft, serene festival moonlit night)
     this.game.lighting.clear();
-    // Warm light from shore diyas and aarti plate
-    this.game.lighting.addLight(360, 520, 180, 'rgba(255, 170, 40, 0.45)', 0.8);
-    // Glowing lantern on ceremonial boat
-    this.game.lighting.addLight(this.boatX + 90, 535, 160, 'rgba(255, 190, 50, 0.55)', 0.9);
-    // Divine aura light around Lord Ganesha / Immersion spot
+
+    const camX = this.game.camera ? this.game.camera.x : 640;
+
+    // (A) Very slight ambient background moonlight fill across sky & far water
+    this.game.lighting.addLight(camX, 360, 950, 'rgba(165, 205, 255, 0.22)', 0.38);
+    this.game.lighting.addLight(this.DEEP_WATER_X, 220, 480, 'rgba(210, 235, 255, 0.28)', 0.48);
+
+    // (B) Far bank subtle warm glow
+    this.game.lighting.addLight(150, 460, 380, 'rgba(255, 225, 175, 0.16)', 0.32);
+    this.game.lighting.addLight(850, 460, 380, 'rgba(255, 225, 175, 0.16)', 0.32);
+
+    // (C) Shore ghat warm diya & aarti light (softened from 0.8 down to 0.46)
+    this.game.lighting.addLight(360, 520, 140, 'rgba(255, 170, 40, 0.35)', 0.46);
+
+    // (D) Glowing lantern on ceremonial boat (softened from 0.9/160 down to 0.38/95)
+    this.game.lighting.addLight(this.boatX + 90, 535, 95, 'rgba(255, 195, 60, 0.35)', 0.38);
+
+    // (E) Divine aura around Lord Ganesha (softened from 0.95/220 down to gentle 0.32/110)
     this.game.lighting.addLight(
       this.boatX,
       Math.min(545, this.submergeY - 30),
-      220,
-      'rgba(255, 215, 0, 0.5)',
-      0.95
+      110,
+      'rgba(255, 220, 110, 0.28)',
+      0.32
     );
-    // Celestial moon reflection light in deep water
-    this.game.lighting.addLight(this.DEEP_WATER_X, 540, 260, 'rgba(230, 245, 255, 0.3)', 0.65);
-    this.game.lighting.render(ctx, this.game.camera, 0.72);
+
+    // (F) Celestial moon reflection light in deep water
+    this.game.lighting.addLight(this.DEEP_WATER_X, 540, 220, 'rgba(215, 240, 255, 0.24)', 0.42);
+
+    // Render with gentle ambient darkness (0.46 instead of pitch black 0.72)
+    // Allows background landscape, far bank silhouettes, and water to be subtly, serenely visible!
+    this.game.lighting.render(ctx, this.game.camera, 0.46);
 
     // 4. Cinematic Captions & Parting Narration (Screen space)
     ctx.save();
@@ -723,7 +773,7 @@ export class VisarjanScene {
 
     ctx.fillStyle = '#ffeb3b';
     ctx.shadowColor = '#ffb300';
-    ctx.shadowBlur = 12;
+    ctx.shadowBlur = 6;
     ctx.beginPath();
     ctx.arc(8, 7, 3, 0, Math.PI * 2);
     ctx.fill();

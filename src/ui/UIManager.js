@@ -71,7 +71,10 @@ export class UIManager {
     const isWardrobeActive = this.game.wardrobe && this.game.wardrobe.showModal;
     const isBadgesActive = this.game.achievements && this.game.achievements.showModal;
 
-    if (!this.isPaused && !this.showSettings && !this.showCredits && !isPhotoActive && !isWardrobeActive && !isBadgesActive) {
+    const activeSceneKey = this.game && this.game.sceneManager ? this.game.sceneManager.currentSceneKey : '';
+    const isGameplay = activeSceneKey === 'street' || activeSceneKey === 'procession';
+
+    if (isGameplay && !this.isPaused && !this.showSettings && !this.showCredits && !isPhotoActive && !isWardrobeActive && !isBadgesActive) {
       if (mouse.justPressed) {
         // Click Fullscreen Button [ ⛶ FULL ]
         if (mouse.x >= fsX && mouse.x <= fsX + 110 && mouse.y >= 18 && mouse.y <= 64) {
@@ -162,20 +165,40 @@ export class UIManager {
     } else if (this.showCredits) {
       if (modalMouse.justPressed) {
         const cx = 640;
-        const bellY = 556;
-        // Check if player clicked the interactive Easter Egg Bell button
-        if (modalMouse.x >= cx - 170 && modalMouse.x <= cx + 170 && modalMouse.y >= bellY && modalMouse.y <= bellY + 36) {
+        const cardX = 220;
+        const cardY = 85;
+        const cardW = 840;
+        const cardH = 565;
+        const bellBtnX = cx - 190;
+        const bellBtnW = 380;
+        const bellBtnY = 471;
+        const bellBtnH = 36;
+
+        // CRITICAL: Immediately consume click so it NEVER leaks to TitleScene / Main Menu!
+        modalMouse.justPressed = false;
+        if (input.mouse) input.mouse.justPressed = false;
+
+        // 1. Check if player clicked the interactive Easter Egg Bell button
+        if (modalMouse.x >= bellBtnX && modalMouse.x <= bellBtnX + bellBtnW && modalMouse.y >= bellBtnY && modalMouse.y <= bellBtnY + bellBtnH) {
           audioManager.playSuccess();
           this.creditsBellClicks = (this.creditsBellClicks || 0) + 1;
           if (this.game && this.game.particles) {
-            this.game.particles.emitDivineAura(cx, bellY + 18, 35);
-            this.game.particles.emitPetals(cx, bellY + 18, 25);
+            this.game.particles.emitDivineAura(cx, bellBtnY + 18, 30);
+            this.game.particles.emitPetals(cx, bellBtnY + 18, 20);
           }
           return;
         }
 
-        this.showCredits = false;
-        audioManager.playSnap();
+        // 2. Check Close button [X] at top-right
+        const isCloseBtn = (modalMouse.x >= cardX + cardW - 46 && modalMouse.x <= cardX + cardW - 14 && modalMouse.y >= cardY + 14 && modalMouse.y <= cardY + 42);
+
+        // 3. Check click outside the modal card
+        const isOutside = (modalMouse.x < cardX || modalMouse.x > cardX + cardW || modalMouse.y < cardY || modalMouse.y > cardY + cardH);
+
+        if (isCloseBtn || isOutside) {
+          this.showCredits = false;
+          audioManager.playSnap();
+        }
       }
     } else if (this.isPaused) {
       if (modalMouse.justPressed) {
@@ -185,6 +208,10 @@ export class UIManager {
   }
 
   handlePauseClick(mx, my) {
+    if (this.game && this.game.input && this.game.input.mouse) {
+      this.game.input.mouse.justPressed = false;
+    }
+
     // Close button [X] at top-right
     if (mx >= 760 && mx <= 810 && my >= 190 && my <= 235) {
       this.isPaused = false;
@@ -210,6 +237,12 @@ export class UIManager {
   }
 
   handleSettingsInteraction(mouse) {
+    if (mouse && mouse.justPressed) {
+      if (this.game && this.game.input && this.game.input.mouse) {
+        this.game.input.mouse.justPressed = false;
+      }
+    }
+
     const mx = mouse.x;
     const my = mouse.y;
 
@@ -713,10 +746,10 @@ export class UIManager {
     ctx.save();
 
     const cx = 640;
-    const cardX = 270;
-    const cardY = 28;
-    const cardW = 740;
-    const cardH = 664;
+    const cardW = 840;
+    const cardH = 565;
+    const cardX = cx - cardW / 2; // 220
+    const cardY = 85;
     const animTime = performance.now() * 0.003;
 
     // 1. Dark Glass Card Background with Deep Cosmic Vignette
@@ -726,7 +759,7 @@ export class UIManager {
     bgGrad.addColorStop(1, 'rgba(15, 23, 42, 0.98)');
     ctx.fillStyle = bgGrad;
     ctx.beginPath();
-    ctx.roundRect(cardX, cardY, cardW, cardH, 18);
+    ctx.roundRect(cardX, cardY, cardW, cardH, 16);
     ctx.fill();
 
     // Golden Outer Border
@@ -744,7 +777,7 @@ export class UIManager {
     ];
     corners.forEach(([ox, oy]) => {
       ctx.beginPath();
-      ctx.arc(ox, oy, 3.5, 0, Math.PI * 2);
+      ctx.arc(ox, oy, 3, 0, Math.PI * 2);
       ctx.fill();
     });
 
@@ -765,82 +798,34 @@ export class UIManager {
 
     // Header Title & Subtitle
     ctx.fillStyle = '#ffd700';
-    ctx.font = 'bold 24px serif';
+    ctx.font = 'bold 22px serif';
     ctx.textAlign = 'center';
-    ctx.fillText('GANESH: THE QUEST', cx, cardY + 30);
+    ctx.textBaseline = 'middle';
+    ctx.fillText('GANESH: THE QUEST', cx, cardY + 26);
 
     ctx.fillStyle = '#fde047';
     ctx.font = 'italic 12px sans-serif';
-    ctx.fillText('"A Festival. A Journey. A Team Miracle."  •  Presented by Team VIBΞX', cx, cardY + 48);
+    ctx.fillText('"A Festival. A Journey. A Team Miracle."  •  Presented by Team VIBΞX', cx, cardY + 46);
 
     // Golden Divider Line
-    ctx.strokeStyle = 'rgba(255, 215, 0, 0.45)';
+    ctx.strokeStyle = 'rgba(255, 215, 0, 0.4)';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(cardX + 35, cardY + 62);
-    ctx.lineTo(cardX + cardW - 35, cardY + 62);
+    ctx.moveTo(cardX + 30, cardY + 58);
+    ctx.lineTo(cardX + cardW - 30, cardY + 58);
     ctx.stroke();
 
-    // ── 5 DESIGNATED TEAM ROLES WITH MEME REFERENCES ───────────────────────
-    const roles = [
-      {
-        role: '👑  LEAD',
-        name: 'Harshini',
-        badge: '⏰ "GUYS IS IT DONE YET?"',
-        quote: '✦ Supreme Commander of Deadlines • "The hackathon ends in 10 minutes!"',
-        color: '#f59e0b',
-        border: 'rgba(245, 158, 11, 0.5)',
-        accent: '#f59e0b'
-      },
-      {
-        role: '📖  STORY WRITER',
-        name: 'Lokeshwari',
-        badge: '🎭 PLOT ARMOR ARCHITECT',
-        quote: '✦ Turned 5 street errands into an emotional anime arc • "Trust the lore!"',
-        color: '#ec4899',
-        border: 'rgba(236, 72, 153, 0.5)',
-        accent: '#ec4899'
-      },
-      {
-        role: '💻  WEB DESIGNER',
-        name: 'Polinaidu',
-        badge: '🎯 100% RESPONSIVE WIZARD',
-        quote: '✦ Fought margin-top on 50 mobile devices and won • "Just add 5px padding bro"',
-        color: '#38bdf8',
-        border: 'rgba(56, 189, 248, 0.5)',
-        accent: '#38bdf8'
-      },
-      {
-        role: '🎶  PROPS & AUDIO',
-        name: 'Venkat',
-        badge: '🎧 3 AM BASS & BELLS DJ',
-        quote: '✦ Synthesized dhol beats & temple bells at midnight • "Turn Bappa\'s beats to 11!"',
-        color: '#a855f7',
-        border: 'rgba(168, 85, 247, 0.5)',
-        accent: '#a855f7'
-      },
-      {
-        role: '🛠️  BACKGROUND & BUG FIXES',
-        name: 'Gnan Charan  &  Nikhil Sai Reddy',
-        badge: '☕ 4 AM BUG EXTERMINATORS',
-        quote: '✦ Placed 1,000 houses & mango trees; fixed 99 bugs, created 128, fixed all 128!',
-        color: '#10b981',
-        border: 'rgba(16, 185, 129, 0.5)',
-        accent: '#10b981'
-      }
-    ];
+    // ── 2-COLUMN BALANCED ROSTER LAYOUT ─────────────────────────────────────
+    const colW = 388;
+    const colX1 = cardX + 24; // 244
+    const colX2 = cardX + cardW - 24 - colW; // 648
+    const rowH = 66;
 
-    const rowW = 660;
-    const rowX = cx - rowW / 2;
-    let startY = cardY + 74;
-
-    roles.forEach(r => {
-      const rowH = 58;
-
-      // Card Box
-      ctx.fillStyle = 'rgba(22, 27, 42, 0.9)';
+    const renderRoleCard = (r, rx, ry, rw, rh) => {
+      // Background Box
+      ctx.fillStyle = 'rgba(22, 27, 42, 0.92)';
       ctx.beginPath();
-      ctx.roundRect(rowX, startY, rowW, rowH, 8);
+      ctx.roundRect(rx, ry, rw, rh, 8);
       ctx.fill();
 
       // Border
@@ -848,90 +833,148 @@ export class UIManager {
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
-      // Left Accent Strip
+      // Left Color Accent Strip
       ctx.fillStyle = r.accent;
       ctx.beginPath();
-      ctx.roundRect(rowX + 1, startY + 1, 5, rowH - 2, [7, 0, 0, 7]);
+      ctx.roundRect(rx + 1, ry + 1, 5, rh - 2, [7, 0, 0, 7]);
       ctx.fill();
 
-      // Top line: Role (left) + Meme Badge (right)
+      // Top line: Role + Meme Badge
       ctx.fillStyle = r.color;
       ctx.font = 'bold 11px sans-serif';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
-      ctx.fillText(r.role, rowX + 18, startY + 8);
+      ctx.fillText(r.role, rx + 14, ry + 7);
 
-      // Meme Badge Pill
+      // Badge Pill
       ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
       ctx.beginPath();
-      ctx.roundRect(rowX + rowW - 204, startY + 6, 192, 18, 5);
+      ctx.roundRect(rx + rw - 170, ry + 5, 162, 18, 5);
       ctx.fill();
       ctx.fillStyle = r.color;
-      ctx.font = 'bold 10px sans-serif';
+      ctx.font = 'bold 9.5px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(r.badge, rowX + rowW - 108, startY + 9);
+      ctx.textBaseline = 'middle';
+      ctx.fillText(r.badge, rx + rw - 89, ry + 14);
 
-      // Second line: Name (left)
+      // Second line: Name
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 15px sans-serif';
+      ctx.font = 'bold 14px sans-serif';
       ctx.textAlign = 'left';
-      ctx.fillText(r.name, rowX + 18, startY + 23);
+      ctx.textBaseline = 'top';
+      ctx.fillText(r.name, rx + 14, ry + 25);
 
-      // Third line: Funny Quote
+      // Third line: Quote / Lore
       ctx.fillStyle = '#cbd5e1';
-      ctx.font = 'italic 11px sans-serif';
-      ctx.fillText(r.quote, rowX + 18, startY + 41);
+      ctx.font = 'italic 10.5px sans-serif';
+      ctx.fillText(r.quote, rx + 14, ry + 46);
+    };
 
-      startY += rowH + 7;
-    });
+    // Row 1 (Lead & Story Writer)
+    const row1Y = cardY + 68; // 153
+    renderRoleCard({
+      role: '👑  LEAD',
+      name: 'Harshini',
+      badge: '⏰ DEADLINE ENFORCER',
+      quote: '✦ "Guys is it done yet? Hackathon ends in 10 mins!"',
+      color: '#f59e0b',
+      border: 'rgba(245, 158, 11, 0.5)',
+      accent: '#f59e0b'
+    }, colX1, row1Y, colW, rowH);
 
-    // ── TEAM VIBΞX GRAND EMBLEM ────────────────────────────────────────────
-    const teamY = startY + 2;
-    const teamH = 172;
+    renderRoleCard({
+      role: '📖  STORY WRITER',
+      name: 'Lokeshwari',
+      badge: '🎭 LORE ARCHITECT',
+      quote: '✦ Turned 5 street errands into an emotional anime arc!',
+      color: '#ec4899',
+      border: 'rgba(236, 72, 153, 0.5)',
+      accent: '#ec4899'
+    }, colX2, row1Y, colW, rowH);
 
-    const teamGrad = ctx.createLinearGradient(rowX, teamY, rowX + rowW, teamY + teamH);
-    teamGrad.addColorStop(0, 'rgba(30, 27, 75, 0.95)');
-    teamGrad.addColorStop(0.5, 'rgba(65, 18, 88, 0.95)');
-    teamGrad.addColorStop(1, 'rgba(30, 27, 75, 0.95)');
+    // Row 2 (Web Designer & Props/Audio)
+    const row2Y = row1Y + rowH + 6; // 225
+    renderRoleCard({
+      role: '💻  WEB DESIGNER',
+      name: 'Polinaidu',
+      badge: '🎯 RESPONSIVE WIZARD',
+      quote: '✦ Fought margin-top on 50 devices: "Just add 5px padding bro"',
+      color: '#38bdf8',
+      border: 'rgba(56, 189, 248, 0.5)',
+      accent: '#38bdf8'
+    }, colX1, row2Y, colW, rowH);
+
+    renderRoleCard({
+      role: '🎶  PROPS & AUDIO',
+      name: 'Venkat',
+      badge: '🎧 3 AM BEATS & BELLS',
+      quote: '✦ Synthesized dhol beats at midnight: "Turn Bappa to 11!"',
+      color: '#a855f7',
+      border: 'rgba(168, 85, 247, 0.5)',
+      accent: '#a855f7'
+    }, colX2, row2Y, colW, rowH);
+
+    // Row 3 - Featured Full-Width Card (Background & Bug Fixes)
+    const row3Y = row2Y + rowH + 6; // 297
+    const wideW = colW * 2 + 16; // 792
+    renderRoleCard({
+      role: '🛠️  BACKGROUND & BUG FIXES',
+      name: 'Gnan Charan  &  Nikhil Sai Reddy',
+      badge: '☕ 4 AM BUG EXTERMINATORS',
+      quote: '✦ Placed 1,000 houses & mango trees; fixed 99 bugs, created 128, fixed all 128!',
+      color: '#10b981',
+      border: 'rgba(16, 185, 129, 0.5)',
+      accent: '#10b981'
+    }, colX1, row3Y, wideW, 62);
+
+    // ── TEAM VIBΞX GRAND EMBLEM (SPACIOUS, GENEROUS BREATHING ROOM) ───────────
+    const teamY = row3Y + 70; // 367
+    const teamH = 156;
+
+    const teamGrad = ctx.createLinearGradient(colX1, teamY, colX1 + wideW, teamY + teamH);
+    teamGrad.addColorStop(0, 'rgba(30, 27, 75, 0.96)');
+    teamGrad.addColorStop(0.5, 'rgba(65, 18, 88, 0.96)');
+    teamGrad.addColorStop(1, 'rgba(30, 27, 75, 0.96)');
     ctx.fillStyle = teamGrad;
     ctx.beginPath();
-    ctx.roundRect(rowX, teamY, rowW, teamH, 12);
+    ctx.roundRect(colX1, teamY, wideW, teamH, 12);
     ctx.fill();
 
     ctx.strokeStyle = '#ffd700';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1.8;
     ctx.stroke();
 
-    // Banner Top
+    // 1. Roster Header (y = teamY + 22)
     ctx.fillStyle = '#fef08a';
     ctx.font = 'bold 11px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('★  OFFICIAL TEAM ROSTER  ★', cx, teamY + 16);
+    ctx.textBaseline = 'middle';
+    ctx.fillText('★  OFFICIAL TEAM ROSTER  ★', cx, teamY + 22);
 
-    // Team Name
+    // 2. Team Name (y = teamY + 52) - 30px below header, no overlap
     ctx.fillStyle = '#ffffff';
     ctx.shadowColor = '#ffd700';
-    ctx.shadowBlur = 12;
-    ctx.font = 'bold 26px sans-serif';
-    ctx.fillText('TEAM  VIBΞX', cx, teamY + 40);
+    ctx.shadowBlur = 10;
+    ctx.font = 'bold 24px sans-serif';
+    ctx.fillText('TEAM  VIBΞX', cx, teamY + 52);
     ctx.shadowBlur = 0;
 
-    // Meme Tagline
+    // 3. Meme Tagline (y = teamY + 78) - 26px below team name, clear spacing
     ctx.fillStyle = '#ffd54f';
-    ctx.font = 'italic 12px sans-serif';
-    ctx.fillText('"0 Sleep • 5,000 Commits • Powered by Chai, Biryani, StackOverflow & Bappa\'s Blessings 🙏"', cx, teamY + 62);
+    ctx.font = 'italic 11.5px sans-serif';
+    ctx.fillText('"0 Sleep • 5,000 Commits • Powered by Chai, Biryani, StackOverflow & Bappa\'s Blessings 🙏"', cx, teamY + 78);
 
-    // Interactive Easter Egg Bell Button (Pill at y: 556)
-    const bellBtnX = cx - 170;
-    const bellBtnY = 556;
-    const bellBtnW = 340;
-    const bellBtnH = 34;
+    // 4. Interactive Easter Egg Bell Button (y = teamY + 104) - 26px below tagline
+    const bellBtnW = 380;
+    const bellBtnH = 36;
+    const bellBtnX = cx - bellBtnW / 2;
+    const bellBtnY = teamY + 104;
     const bellPulse = (Math.sin(animTime * 4) + 1) * 0.5;
     const clicks = this.creditsBellClicks || 0;
 
-    ctx.fillStyle = `rgba(234, 179, 8, ${0.2 + bellPulse * 0.18})`;
+    ctx.fillStyle = `rgba(234, 179, 8, ${0.22 + bellPulse * 0.18})`;
     ctx.beginPath();
-    ctx.roundRect(bellBtnX, bellBtnY, bellBtnW, bellBtnH, 17);
+    ctx.roundRect(bellBtnX, bellBtnY, bellBtnW, bellBtnH, 18);
     ctx.fill();
     ctx.strokeStyle = '#ffd700';
     ctx.lineWidth = 2;
@@ -939,12 +982,12 @@ export class UIManager {
 
     const bellLabel = clicks > 0
       ? `🔔 [CLICK] TEMPLE BELL SPAM: ${clicks} CHIMES! ✨`
-      : '🔔 [CLICK ME] SPAM TEMPLE BELL FOR BAPPA';
+      : '🔔 [CLICK ME] SPAM TEMPLE BELL FOR BAPPA ✨';
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 12px sans-serif';
-    ctx.fillText(bellLabel, cx, bellBtnY + 21);
+    ctx.font = 'bold 12.5px sans-serif';
+    ctx.fillText(bellLabel, cx, bellBtnY + 18);
 
-    // Close helper
+    // Close helper note
     ctx.fillStyle = '#94a3b8';
     ctx.font = '10px sans-serif';
     ctx.fillText('[ Press ✕ or Click Outside to Close ]', cx, cardY + cardH - 12);

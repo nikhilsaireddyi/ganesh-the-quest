@@ -800,6 +800,10 @@ export class ProcessionScene {
     this.game.lighting.render(ctx, this.game.camera, ambientDark);
 
     // 6. Dialogue Box (if player speaks with companions)
+    if (this.game && this.game.isCapturingPhoto) {
+      return;
+    }
+
     if (this.game.dialogue) {
       this.game.dialogue.render(ctx);
     }

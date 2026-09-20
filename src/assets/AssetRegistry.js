@@ -615,15 +615,15 @@ export class AssetRegistry {
 
         const glowPulse = Math.sin(animTime * 2) * 0.15 + 0.85;
 
-        // Aura (Only in complete or high reveal stages)
+        // Aura (Soft, reverent halo in complete or high reveal stages)
         if (revealStage >= 4) {
-          const grad = ctx.createRadialGradient(0, -80, 20, 0, -80, 100);
-          grad.addColorStop(0, `rgba(255, 215, 0, ${0.45 * glowPulse})`);
-          grad.addColorStop(0.6, `rgba(255, 140, 0, ${0.2 * glowPulse})`);
+          const grad = ctx.createRadialGradient(0, -80, 20, 0, -80, 85);
+          grad.addColorStop(0, `rgba(255, 215, 0, ${0.22 * glowPulse})`);
+          grad.addColorStop(0.6, `rgba(255, 140, 0, ${0.08 * glowPulse})`);
           grad.addColorStop(1, 'rgba(255, 215, 0, 0)');
           ctx.fillStyle = grad;
           ctx.beginPath();
-          ctx.arc(0, -80, 100, 0, Math.PI * 2);
+          ctx.arc(0, -80, 85, 0, Math.PI * 2);
           ctx.fill();
         }
 

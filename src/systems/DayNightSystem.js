@@ -76,7 +76,7 @@ export class DayNightSystem {
     return !this.isNight();
   }
 
-  renderSky(ctx, viewportWidth = 1280, viewportHeight = 720) {
+  renderSky(ctx, viewportWidth = 1280, viewportHeight = 720, renderCelestial = true) {
     ctx.save();
 
     let topColor, bottomColor;
@@ -101,8 +101,21 @@ export class DayNightSystem {
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, viewportWidth, viewportHeight);
 
-    // Render Celestial Body: Sun or Moon
-    if (this.stormFactor < 0.7) {
+    // Stars (Night sky)
+    if (this.progress >= 0.5 && this.stormFactor < 0.7) {
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowBlur = 4;
+      for (let i = 0; i < 40; i++) {
+        const sx = (i * 137.5) % viewportWidth;
+        const sy = (i * 73.1) % (viewportHeight * 0.45);
+        ctx.globalAlpha = 0.3 + Math.sin(Date.now() * 0.003 + i) * 0.4;
+        ctx.fillRect(sx, sy, 2, 2);
+      }
+      ctx.globalAlpha = 1.0;
+    }
+
+    // Render Celestial Body: Sun or Moon (if enabled)
+    if (renderCelestial && this.stormFactor < 0.7) {
       if (this.progress < 0.5) {
         // Sun
         const sunY = 120 + this.progress * 240;
@@ -123,16 +136,6 @@ export class DayNightSystem {
         ctx.beginPath();
         ctx.arc(moonX, moonY, 28, 0, Math.PI * 2);
         ctx.fill();
-
-        // Stars
-        ctx.fillStyle = '#ffffff';
-        ctx.shadowBlur = 4;
-        for (let i = 0; i < 40; i++) {
-          const sx = (i * 137.5) % viewportWidth;
-          const sy = (i * 73.1) % (viewportHeight * 0.45);
-          ctx.globalAlpha = 0.3 + Math.sin(Date.now() * 0.003 + i) * 0.4;
-          ctx.fillRect(sx, sy, 2, 2);
-        }
       }
     }
 
