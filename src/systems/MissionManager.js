@@ -50,8 +50,16 @@ export class MissionManager {
       id: 'ELECTRICAL_WIRING',
       title: 'Electrical Wiring',
       objective: 'Connect matching electrical terminals to power the lights.',
-      nextMission: 'GANESHA_REVEAL',
+      nextMission: 'COOK_MODAKS',
       maxProgress: 4
+    });
+
+    this.registerMission({
+      id: 'COOK_MODAKS',
+      title: 'Prepare Sacred Modaks',
+      objective: 'Cook sweet steamed modaks for Lord Ganesha with Ananya.',
+      nextMission: 'GANESHA_REVEAL',
+      maxProgress: 1
     });
 
     this.registerMission({
@@ -74,8 +82,16 @@ export class MissionManager {
       id: 'GENERATOR_REPAIR',
       title: 'Generator Failure',
       objective: 'Restore power: Reconnect cable, flip breaker switch, pull starter cord.',
-      nextMission: 'SYNCHRONIZED_LIFT',
+      nextMission: 'AARTI_RITUAL',
       maxProgress: 3
+    });
+
+    this.registerMission({
+      id: 'AARTI_RITUAL',
+      title: 'Maha Aarti Ritual',
+      objective: 'Step up to the illuminated mandapam and perform the sacred Maha Aarti.',
+      nextMission: 'SYNCHRONIZED_LIFT',
+      maxProgress: 1
     });
 
     this.registerMission({

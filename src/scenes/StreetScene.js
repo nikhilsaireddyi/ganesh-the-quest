@@ -45,9 +45,11 @@ export class StreetScene {
           FLOWER_PUZZLE: ["The flower seller has fresh marigolds and lotus. Let's make a garland!"],
           DECORATE_MANDAPAM: ["Here, take these festival banners for the entrance archway."],
           ELECTRICAL_WIRING: ["The electrician needs a hand connecting the main power line."],
+          COOK_MODAKS: ["Young Ananya is ready down the street. Go help make the sacred modaks!"],
           GANESHA_REVEAL: ["Behold! The divine arrival of Lord Ganesha is upon us!"],
           STORM_PROTECT: ["A sudden squall is coming! Secure the mandapam tarps immediately!"],
           GENERATOR_REPAIR: ["Lightning tripped the breaker! Check the generator near the electrician!"],
+          AARTI_RITUAL: ["Step up to the mandapam to begin the grand Maha Aarti!"],
           SYNCHRONIZED_LIFT: ["Everyone is here. On the count of three, we lift the palanquin together!"]
         }
       }),
@@ -70,6 +72,7 @@ export class StreetScene {
         dialogues: {
           ELECTRICAL_WIRING: ["Let's get the wiring connected so the entire street shines bright!"],
           DECORATE_MANDAPAM: ["Here are the long strings of colorful fairy lights."],
+          COOK_MODAKS: ["The street lights look stunning! Now go help Ananya with the modaks!"],
           GENERATOR_REPAIR: ["The surge tripped the generator! Reconnect the heavy cable and pull the starter cord!"]
         }
       }),
@@ -79,7 +82,8 @@ export class StreetScene {
         spriteKey: 'CHILD_SPRITE',
         x: 1670,
         dialogues: {
-          default: ["Ganpati Bappa Morya! I made modaks for Bappa!"]
+          COOK_MODAKS: ["Let's prepare sweet steamed modaks with coconut and jaggery for Bappa!"],
+          default: ["Ganpati Bappa Morya! I love making modaks for Bappa!"]
         }
       })
     ];
@@ -177,18 +181,22 @@ export class StreetScene {
 
     // 8. Modak Cooking (Interactive with Child Ananya)
     this.modakMinigame = new ModakCooking(() => {
+      this.game.missions.setProgress(1); // completes COOK_MODAKS
       this.player.canMove = true;
       audioManager.playSuccess();
       achievementSystem.unlock('chef_of_bappa');
       this.dialogueCooldown = 0.3;
       this.game.dialogue.start('Ananya', [
-        "Yay! These holy modaks smell so fragrant! Bappa will be overjoyed!",
-        "Take these fresh modaks with you for the grand festival!"
-      ]);
+        "Yay! These holy modaks smell so fragrant and delicious!",
+        "Look towards the pandal! Lord Ganesha's sacred arrival is beginning!"
+      ], () => {
+        this.startGaneshaRevealCinematic();
+      });
     });
 
-    // 9. Maha Aarti Ritual (after Mandapam lights up)
+    // 9. Maha Aarti Ritual (Manual mission after generator repair)
     this.aartiRitual = new AartiRitual(() => {
+      this.game.missions.setProgress(1); // completes AARTI_RITUAL
       this.player.canMove = true;
       audioManager.playSuccess();
       achievementSystem.unlock('divine_pujari');
@@ -405,6 +413,9 @@ export class StreetScene {
       if (currentMission === 'BUILD_MANDAPAM' && this.mandapam.state === 'empty') {
         mandapamHasWork = true;
         mandapamLabel = '[E] BUILD';
+      } else if (currentMission === 'AARTI_RITUAL') {
+        mandapamHasWork = true;
+        mandapamLabel = '[E] AARTI';
       } else if (currentMission === 'SYNCHRONIZED_LIFT') {
         mandapamHasWork = true;
         mandapamLabel = '[E] LIFT';
@@ -414,7 +425,24 @@ export class StreetScene {
     this.mandapam.setWorkState(mandapamHasWork, mandapamLabel);
     this.mandapam.update(dt, this.player.x);
     this.ganesha.update(dt);
-    this.npcs.forEach(npc => npc.update(dt, this.player.x));
+
+    this.npcs.forEach(npc => {
+      if (currentMission === 'DECORATE_MANDAPAM') {
+        const hasItem = (npc.id === 'flower_seller' && !this.decorationsCollector.isItemCollected('flowers')) ||
+                        (npc.id === 'uncle' && !this.decorationsCollector.isItemCollected('banners')) ||
+                        (npc.id === 'electrician' && !this.decorationsCollector.isItemCollected('lights'));
+        npc.setPrompt(hasItem ? null : '[E] TALK');
+      } else if (currentMission === 'COOK_MODAKS' && npc.id === 'child') {
+        npc.setPrompt('[E] COOK MODAKS');
+      } else if (currentMission === 'FLOWER_PUZZLE' && npc.id === 'flower_seller') {
+        npc.setPrompt('[E] WEAVE');
+      } else if (currentMission === 'ELECTRICAL_WIRING' && npc.id === 'electrician') {
+        npc.setPrompt('[E] WIRE');
+      } else {
+        npc.setPrompt('[E] TALK');
+      }
+      npc.update(dt, this.player.x);
+    });
 
     this.game.camera.follow(this.player, this.game.input.isMobile);
 
@@ -434,6 +462,11 @@ export class StreetScene {
         this.bambooMinigame.start();
         return;
       }
+      if (currentMission === 'AARTI_RITUAL' && !this.aartiRitual.active) {
+        this.player.canMove = false;
+        this.aartiRitual.start();
+        return;
+      }
       if (currentMission === 'SYNCHRONIZED_LIFT' && !this.liftMinigame.active) {
         this.player.canMove = false;
         this.liftMinigame.start();
@@ -450,7 +483,7 @@ export class StreetScene {
       }
     }
 
-    // 3. Decorations Collection Items
+    // 3. Decorations Collection Items (Never open dialogue while picking up items!)
     if (currentMission === 'DECORATE_MANDAPAM') {
       for (const item of this.decorationsCollector.items) {
         if (!item.collected && Math.abs(this.player.x - item.x) < 85) {
@@ -458,18 +491,32 @@ export class StreetScene {
           return;
         }
       }
+
+      for (const npc of this.npcs) {
+        if (npc.isNearPlayer) {
+          let itemCollected = false;
+          if (npc.id === 'flower_seller' && !this.decorationsCollector.isItemCollected('flowers')) {
+            this.decorationsCollector.collect('flowers', this.game.particles);
+            itemCollected = true;
+          } else if (npc.id === 'uncle' && !this.decorationsCollector.isItemCollected('banners')) {
+            this.decorationsCollector.collect('banners', this.game.particles);
+            itemCollected = true;
+          } else if (npc.id === 'electrician' && !this.decorationsCollector.isItemCollected('lights')) {
+            this.decorationsCollector.collect('lights', this.game.particles);
+            itemCollected = true;
+          }
+
+          if (itemCollected) {
+            return; // Item collected from NPC: DO NOT OPEN DIALOGUE!
+          }
+        }
+      }
+      return; // Do not open general dialogue during decorations gathering
     }
 
     // 4. NPC Interactions
     for (const npc of this.npcs) {
       if (npc.isNearPlayer) {
-        // Collectible check during mission 3
-        if (currentMission === 'DECORATE_MANDAPAM') {
-          if (npc.id === 'flower_seller') this.decorationsCollector.collect('flowers', this.game.particles);
-          if (npc.id === 'uncle') this.decorationsCollector.collect('banners', this.game.particles);
-          if (npc.id === 'electrician') this.decorationsCollector.collect('lights', this.game.particles);
-        }
-
         // Mini-game triggers
         if (currentMission === 'FLOWER_PUZZLE' && npc.id === 'flower_seller') {
           this.player.canMove = false;
@@ -484,9 +531,11 @@ export class StreetScene {
 
         // Child NPC Ananya -> Sacred Modak Cooking!
         if (npc.id === 'child') {
-          this.player.canMove = false;
-          this.modakMinigame.start();
-          return;
+          if (currentMission === 'COOK_MODAKS' && !this.modakMinigame.active) {
+            this.player.canMove = false;
+            this.modakMinigame.start();
+            return;
+          }
         }
 
         // Dialogue Trigger
@@ -518,9 +567,15 @@ export class StreetScene {
       this.game.particles.emitDivineAura(1400, 380, 25);
     }
     if (t > 4.5) {
-      // Finish light-up and transition to Ganesha Reveal
+      // Finish light-up and guide to young Ananya for Modak cooking!
       this.lightUpCinematic.active = false;
-      this.startGaneshaRevealCinematic();
+      this.player.canMove = true;
+      this.game.camera.releaseScripted();
+      this.game.missions.start('COOK_MODAKS');
+      this.game.dialogue.start('Electrician', [
+        "The wiring is complete! Look how brilliantly the whole street shines!",
+        "Now visit young Ananya down the street to prepare the sacred Modaks for Lord Ganesha!"
+      ]);
     }
   }
 
@@ -576,7 +631,12 @@ export class StreetScene {
     if (t > 3.5) {
       this.powerRestorationCinematic.active = false;
       this.game.camera.releaseScripted();
-      this.aartiRitual.start();
+      this.player.canMove = true;
+      this.game.missions.start('AARTI_RITUAL');
+      this.game.dialogue.start('Festival Uncle', [
+        "The power is restored! The mandapam shines bright once more!",
+        "Now step up to the mandapam to begin the grand Maha Aarti!"
+      ]);
     }
   }
 
@@ -793,9 +853,15 @@ export class StreetScene {
     } else if (currentMission === 'ELECTRICAL_WIRING') {
       targetX = 2160;
       targetName = 'Electrician';
+    } else if (currentMission === 'COOK_MODAKS') {
+      targetX = 1670;
+      targetName = 'Ananya (Modaks)';
     } else if (currentMission === 'GENERATOR_REPAIR') {
       targetX = 2100;
       targetName = 'Generator';
+    } else if (currentMission === 'AARTI_RITUAL') {
+      targetX = 1400;
+      targetName = 'Mandapam (Maha Aarti)';
     } else if (currentMission === 'SYNCHRONIZED_LIFT') {
       targetX = 1400;
       targetName = 'Palanquin';
@@ -845,9 +911,15 @@ export class StreetScene {
     } else if (currentMission === 'ELECTRICAL_WIRING') {
       targetX = 2160;
       label = 'Electrician Subhas';
+    } else if (currentMission === 'COOK_MODAKS') {
+      targetX = 1670;
+      label = 'Cook Modaks with Ananya';
     } else if (currentMission === 'GENERATOR_REPAIR') {
       targetX = 2100;
       label = 'Diesel Generator';
+    } else if (currentMission === 'AARTI_RITUAL') {
+      targetX = 1400;
+      label = 'Perform Maha Aarti';
     } else if (currentMission === 'SYNCHRONIZED_LIFT') {
       targetX = 1400;
       label = 'Lift Ganesha Palanquin';

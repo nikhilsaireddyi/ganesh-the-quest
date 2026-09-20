@@ -48,6 +48,11 @@ export class DecorationsCollector {
     return this.items.every(i => i.collected);
   }
 
+  isItemCollected(id) {
+    const item = this.items.find(i => i.id === id);
+    return item ? item.collected : true;
+  }
+
   getCollectedCount() {
     return this.items.filter(i => i.collected).length;
   }

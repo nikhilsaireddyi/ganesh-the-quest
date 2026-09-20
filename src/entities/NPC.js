@@ -6,7 +6,7 @@
 import { assetRegistry } from '../assets/AssetRegistry.js';
 
 export class NPC {
-  constructor({ id, name, spriteKey, x, y = 540, facing = -1, dialogues = {} }) {
+  constructor({ id, name, spriteKey, x, y = 540, facing = -1, dialogues = {}, promptText = '[E] TALK' }) {
     this.id = id;
     this.name = name;
     this.spriteKey = spriteKey;
@@ -14,8 +14,13 @@ export class NPC {
     this.y = y;
     this.facing = facing;
     this.dialogues = dialogues;
+    this.promptText = promptText;
     this.animTime = Math.random() * 5;
     this.isNearPlayer = false;
+  }
+
+  setPrompt(text) {
+    this.promptText = text;
   }
 
   update(dt, playerX) {
@@ -50,14 +55,18 @@ export class NPC {
     );
 
     // Floating interaction prompt when near player
-    if (this.isNearPlayer) {
+    if (this.isNearPlayer && this.promptText) {
       ctx.save();
       const promptY = this.y - 82 + Math.sin(this.animTime * 4) * 3;
+      const promptStr = this.promptText;
+
+      ctx.font = 'bold 11px sans-serif';
+      const promptW = Math.max(72, ctx.measureText(promptStr).width + 22);
 
       // Small speech bubble
       ctx.fillStyle = 'rgba(255, 111, 0, 0.9)';
       ctx.beginPath();
-      ctx.roundRect(this.x - 36, promptY - 14, 72, 22, 6);
+      ctx.roundRect(this.x - promptW / 2, promptY - 14, promptW, 22, 6);
       ctx.fill();
       ctx.strokeStyle = '#ffd54f';
       ctx.lineWidth = 1.5;
@@ -73,10 +82,9 @@ export class NPC {
 
       // Text
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 11px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('[E] TALK', this.x, promptY - 3);
+      ctx.fillText(promptStr, this.x, promptY - 3);
 
       ctx.restore();
     }
