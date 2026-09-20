@@ -161,6 +161,19 @@ export class UIManager {
       this.handleSettingsInteraction(modalMouse);
     } else if (this.showCredits) {
       if (modalMouse.justPressed) {
+        const cx = 640;
+        const bellY = 556;
+        // Check if player clicked the interactive Easter Egg Bell button
+        if (modalMouse.x >= cx - 170 && modalMouse.x <= cx + 170 && modalMouse.y >= bellY && modalMouse.y <= bellY + 36) {
+          audioManager.playSuccess();
+          this.creditsBellClicks = (this.creditsBellClicks || 0) + 1;
+          if (this.game && this.game.particles) {
+            this.game.particles.emitDivineAura(cx, bellY + 18, 35);
+            this.game.particles.emitPetals(cx, bellY + 18, 25);
+          }
+          return;
+        }
+
         this.showCredits = false;
         audioManager.playSnap();
       }
@@ -699,58 +712,242 @@ export class UIManager {
   renderCreditsModal(ctx) {
     ctx.save();
 
-    ctx.fillStyle = '#1e2433';
+    const cx = 640;
+    const cardX = 270;
+    const cardY = 28;
+    const cardW = 740;
+    const cardH = 664;
+    const animTime = performance.now() * 0.003;
+
+    // 1. Dark Glass Card Background with Deep Cosmic Vignette
+    const bgGrad = ctx.createLinearGradient(cardX, cardY, cardX + cardW, cardY + cardH);
+    bgGrad.addColorStop(0, 'rgba(15, 23, 42, 0.98)');
+    bgGrad.addColorStop(0.5, 'rgba(28, 18, 48, 0.98)');
+    bgGrad.addColorStop(1, 'rgba(15, 23, 42, 0.98)');
+    ctx.fillStyle = bgGrad;
     ctx.beginPath();
-    ctx.roundRect(340, 100, 600, 520, 16);
+    ctx.roundRect(cardX, cardY, cardW, cardH, 18);
     ctx.fill();
-    ctx.strokeStyle = '#ffd54f';
-    ctx.lineWidth = 3;
+
+    // Golden Outer Border
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 2.5;
     ctx.stroke();
 
-    // Close Button [X]
+    // Corner Gold Studs
+    ctx.fillStyle = '#ffd700';
+    const corners = [
+      [cardX + 12, cardY + 12],
+      [cardX + cardW - 12, cardY + 12],
+      [cardX + 12, cardY + cardH - 12],
+      [cardX + cardW - 12, cardY + cardH - 12]
+    ];
+    corners.forEach(([ox, oy]) => {
+      ctx.beginPath();
+      ctx.arc(ox, oy, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Close Button [✕]
     ctx.fillStyle = '#ef4444';
     ctx.beginPath();
-    ctx.roundRect(885, 115, 40, 36, 8);
+    ctx.roundRect(cardX + cardW - 46, cardY + 14, 32, 28, 7);
     ctx.fill();
-    ctx.strokeStyle = '#ffd54f';
+    ctx.strokeStyle = '#fca5a5';
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 18px sans-serif';
+    ctx.font = 'bold 15px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('✕', 905, 139);
+    ctx.textBaseline = 'middle';
+    ctx.fillText('✕', cardX + cardW - 30, cardY + 28);
 
+    // Header Title & Subtitle
     ctx.fillStyle = '#ffd700';
-    ctx.font = 'bold 28px sans-serif';
+    ctx.font = 'bold 24px serif';
     ctx.textAlign = 'center';
-    ctx.fillText('GANESH: THE QUEST', 640, 160);
+    ctx.fillText('GANESH: THE QUEST', cx, cardY + 30);
 
-    ctx.fillStyle = '#ffb300';
-    ctx.font = 'italic 16px sans-serif';
-    ctx.fillText('"A Festival. A Journey. A Homecoming."', 640, 195);
+    ctx.fillStyle = '#fde047';
+    ctx.font = 'italic 12px sans-serif';
+    ctx.fillText('"A Festival. A Journey. A Team Miracle."  •  Presented by Team VIBΞX', cx, cardY + 48);
 
-    ctx.fillStyle = '#e0e0e0';
-    ctx.font = '15px sans-serif';
-    const lines = [
-      'Dedicated to the spirit, joy, and unity of Ganesh Chaturthi.',
-      '',
-      '• Concept & Architecture: Antigravity Game Engine',
-      '• Visuals: Decoupled 2D/2.5D Replaceable Asset System',
-      '• Audio: Procedural Web Audio Synthesizer (Dhol, Bells, Sitar)',
-      '• Built for: Hackathons, PC, Mobile & Browser',
-      '',
-      'Ganpati Bappa Morya! 🙏'
+    // Golden Divider Line
+    ctx.strokeStyle = 'rgba(255, 215, 0, 0.45)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cardX + 35, cardY + 62);
+    ctx.lineTo(cardX + cardW - 35, cardY + 62);
+    ctx.stroke();
+
+    // ── 5 DESIGNATED TEAM ROLES WITH MEME REFERENCES ───────────────────────
+    const roles = [
+      {
+        role: '👑  LEAD',
+        name: 'Harshini',
+        badge: '⏰ "GUYS IS IT DONE YET?"',
+        quote: '✦ Supreme Commander of Deadlines • "The hackathon ends in 10 minutes!"',
+        color: '#f59e0b',
+        border: 'rgba(245, 158, 11, 0.5)',
+        accent: '#f59e0b'
+      },
+      {
+        role: '📖  STORY WRITER',
+        name: 'Lokeshwari',
+        badge: '🎭 PLOT ARMOR ARCHITECT',
+        quote: '✦ Turned 5 street errands into an emotional anime arc • "Trust the lore!"',
+        color: '#ec4899',
+        border: 'rgba(236, 72, 153, 0.5)',
+        accent: '#ec4899'
+      },
+      {
+        role: '💻  WEB DESIGNER',
+        name: 'Polinaidu',
+        badge: '🎯 100% RESPONSIVE WIZARD',
+        quote: '✦ Fought margin-top on 50 mobile devices and won • "Just add 5px padding bro"',
+        color: '#38bdf8',
+        border: 'rgba(56, 189, 248, 0.5)',
+        accent: '#38bdf8'
+      },
+      {
+        role: '🎶  PROPS & AUDIO',
+        name: 'Venkat',
+        badge: '🎧 3 AM BASS & BELLS DJ',
+        quote: '✦ Synthesized dhol beats & temple bells at midnight • "Turn Bappa\'s beats to 11!"',
+        color: '#a855f7',
+        border: 'rgba(168, 85, 247, 0.5)',
+        accent: '#a855f7'
+      },
+      {
+        role: '🛠️  BACKGROUND & BUG FIXES',
+        name: 'Gnan Charan  &  Nikhil Sai Reddy',
+        badge: '☕ 4 AM BUG EXTERMINATORS',
+        quote: '✦ Placed 1,000 houses & mango trees; fixed 99 bugs, created 128, fixed all 128!',
+        color: '#10b981',
+        border: 'rgba(16, 185, 129, 0.5)',
+        accent: '#10b981'
+      }
     ];
 
-    lines.forEach((l, i) => {
-      ctx.fillText(l, 640, 245 + i * 28);
+    const rowW = 660;
+    const rowX = cx - rowW / 2;
+    let startY = cardY + 74;
+
+    roles.forEach(r => {
+      const rowH = 58;
+
+      // Card Box
+      ctx.fillStyle = 'rgba(22, 27, 42, 0.9)';
+      ctx.beginPath();
+      ctx.roundRect(rowX, startY, rowW, rowH, 8);
+      ctx.fill();
+
+      // Border
+      ctx.strokeStyle = r.border;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Left Accent Strip
+      ctx.fillStyle = r.accent;
+      ctx.beginPath();
+      ctx.roundRect(rowX + 1, startY + 1, 5, rowH - 2, [7, 0, 0, 7]);
+      ctx.fill();
+
+      // Top line: Role (left) + Meme Badge (right)
+      ctx.fillStyle = r.color;
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText(r.role, rowX + 18, startY + 8);
+
+      // Meme Badge Pill
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.beginPath();
+      ctx.roundRect(rowX + rowW - 204, startY + 6, 192, 18, 5);
+      ctx.fill();
+      ctx.fillStyle = r.color;
+      ctx.font = 'bold 10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(r.badge, rowX + rowW - 108, startY + 9);
+
+      // Second line: Name (left)
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 15px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(r.name, rowX + 18, startY + 23);
+
+      // Third line: Funny Quote
+      ctx.fillStyle = '#cbd5e1';
+      ctx.font = 'italic 11px sans-serif';
+      ctx.fillText(r.quote, rowX + 18, startY + 41);
+
+      startY += rowH + 7;
     });
 
-    // Tap to close
+    // ── TEAM VIBΞX GRAND EMBLEM ────────────────────────────────────────────
+    const teamY = startY + 2;
+    const teamH = 172;
+
+    const teamGrad = ctx.createLinearGradient(rowX, teamY, rowX + rowW, teamY + teamH);
+    teamGrad.addColorStop(0, 'rgba(30, 27, 75, 0.95)');
+    teamGrad.addColorStop(0.5, 'rgba(65, 18, 88, 0.95)');
+    teamGrad.addColorStop(1, 'rgba(30, 27, 75, 0.95)');
+    ctx.fillStyle = teamGrad;
+    ctx.beginPath();
+    ctx.roundRect(rowX, teamY, rowW, teamH, 12);
+    ctx.fill();
+
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Banner Top
+    ctx.fillStyle = '#fef08a';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('★  OFFICIAL TEAM ROSTER  ★', cx, teamY + 16);
+
+    // Team Name
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = '#ffd700';
+    ctx.shadowBlur = 12;
+    ctx.font = 'bold 26px sans-serif';
+    ctx.fillText('TEAM  VIBΞX', cx, teamY + 40);
+    ctx.shadowBlur = 0;
+
+    // Meme Tagline
     ctx.fillStyle = '#ffd54f';
-    ctx.font = 'bold 15px sans-serif';
-    ctx.fillText('[ Tap anywhere to close ]', 640, 570);
+    ctx.font = 'italic 12px sans-serif';
+    ctx.fillText('"0 Sleep • 5,000 Commits • Powered by Chai, Biryani, StackOverflow & Bappa\'s Blessings 🙏"', cx, teamY + 62);
+
+    // Interactive Easter Egg Bell Button (Pill at y: 556)
+    const bellBtnX = cx - 170;
+    const bellBtnY = 556;
+    const bellBtnW = 340;
+    const bellBtnH = 34;
+    const bellPulse = (Math.sin(animTime * 4) + 1) * 0.5;
+    const clicks = this.creditsBellClicks || 0;
+
+    ctx.fillStyle = `rgba(234, 179, 8, ${0.2 + bellPulse * 0.18})`;
+    ctx.beginPath();
+    ctx.roundRect(bellBtnX, bellBtnY, bellBtnW, bellBtnH, 17);
+    ctx.fill();
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    const bellLabel = clicks > 0
+      ? `🔔 [CLICK] TEMPLE BELL SPAM: ${clicks} CHIMES! ✨`
+      : '🔔 [CLICK ME] SPAM TEMPLE BELL FOR BAPPA';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText(bellLabel, cx, bellBtnY + 21);
+
+    // Close helper
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '10px sans-serif';
+    ctx.fillText('[ Press ✕ or Click Outside to Close ]', cx, cardY + cardH - 12);
 
     ctx.restore();
   }

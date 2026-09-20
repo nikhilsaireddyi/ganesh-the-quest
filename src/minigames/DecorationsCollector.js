@@ -11,7 +11,7 @@ export class DecorationsCollector {
     this.onComplete = onComplete;
     this.active = false;
     this.items = [
-      { id: 'toran', name: 'Mango Toran', icon: '🌿', collected: false, x: 450, y: 470, hint: 'At House 1' },
+      { id: 'toran', name: 'Mango Toran', icon: '🌿', collected: false, x: 560, y: 470, hint: 'Mango Tree' },
       { id: 'flowers', name: 'Fresh Flowers', icon: '🌺', collected: false, x: 650, y: 470, hint: 'Flower Seller' },
       { id: 'banners', name: 'Festival Banners', icon: '🚩', collected: false, x: 1050, y: 470, hint: 'Festival Uncle' },
       { id: 'cloth', name: 'Saffron Silk Cloth', icon: '🎗️', collected: false, x: 1800, y: 470, hint: 'At Temple' },
@@ -64,6 +64,9 @@ export class DecorationsCollector {
 
     this.items.forEach(item => {
       if (!item.collected) {
+        // Skip toran item: handled by physical Mango Tree and its dedicated interactive minigame
+        if (item.id === 'toran') return;
+
         const floatY = item.y + Math.sin(animTime * 4 + item.x) * 6;
         const dist = Math.abs(playerX - item.x);
         const isNear = dist < 75;
@@ -94,22 +97,6 @@ export class DecorationsCollector {
         ctx.textBaseline = 'middle';
         ctx.fillText(item.icon, item.x, floatY + 1);
 
-        // Name tag / Prompt
-        ctx.fillStyle = isNear ? 'rgba(255, 111, 0, 0.95)' : 'rgba(15, 23, 42, 0.85)';
-        const isMobile = this.game && this.game.input && this.game.input.isMobile;
-        const actKey = isMobile ? 'ACT' : 'E';
-        const tagText = isNear ? `[${actKey}] ${item.name}` : item.name;
-        ctx.font = isNear ? 'bold 11px sans-serif' : '10px sans-serif';
-        const tagW = Math.max(110, ctx.measureText(tagText).width + 20);
-        ctx.beginPath();
-        ctx.roundRect(item.x - tagW / 2, floatY - 34, tagW, 22, 6);
-        ctx.fill();
-        ctx.strokeStyle = isNear ? '#ffd700' : '#78909c';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText(tagText, item.x, floatY - 23);
         ctx.restore();
       }
     });

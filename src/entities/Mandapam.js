@@ -62,29 +62,6 @@ export class Mandapam {
       this.animTime,
       this.isLit
     );
-
-    // Interactive prompt ONLY if near and there is work to be done
-    if (this.isNearPlayer && this.hasWork && !this.isCollapsing && !this.isCollapsed) {
-      ctx.save();
-      const promptY = this.y - 200 + Math.sin(this.animTime * 3) * 4;
-
-      ctx.fillStyle = 'rgba(255, 143, 0, 0.9)';
-      const text = this.interactLabel || '[E] WORK';
-      ctx.font = 'bold 12px sans-serif';
-      const promptW = Math.max(90, ctx.measureText(text).width + 24);
-      ctx.beginPath();
-      ctx.roundRect(this.x - promptW / 2, promptY - 14, promptW, 24, 6);
-      ctx.fill();
-      ctx.strokeStyle = '#ffd54f';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
-      ctx.fillStyle = '#ffffff';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(text, this.x, promptY - 2);
-      ctx.restore();
-    }
   }
 
   renderCollapsed(ctx) {

@@ -125,6 +125,11 @@ export class EndingScene {
     ctx.font = '13px sans-serif';
     ctx.fillText('All 10 Festival Milestones Achieved', cx, 415);
 
+    // Team VIBΞX Credit
+    ctx.fillStyle = '#fef08a';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillText('⚡ Crafted with Devotion by Team VIBΞX ⚡', cx, 460);
+
     // Buttons: PLAY AGAIN & CREDITS
     // Button 1: PLAY AGAIN
     ctx.fillStyle = '#e65100';

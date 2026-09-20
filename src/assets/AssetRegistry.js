@@ -1732,6 +1732,189 @@ export class AssetRegistry {
         ctx.restore();
       }
     });
+
+    // 10. MANGO TREE (Auspicious Festive Mango Tree for Leaves & Toran)
+    this.register('MANGO_TREE_SPRITE', {
+      path: '/assets/environment/props/mango_tree.png',
+      width: 170,
+      height: 230,
+      fallback: (ctx, x, y, w = 170, h = 230, state = 'default', facing = 1, animTime = 0) => {
+        ctx.save();
+        ctx.translate(x, y);
+
+        // 1. Dual Soft Ground Contact Shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, w * 0.46, 14, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.32)';
+        ctx.beginPath();
+        ctx.ellipse(0, -2, w * 0.32, 9, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 2. Gnarled Organic Trunk & Roots
+        const trunkGrad = ctx.createLinearGradient(-25, -h * 0.6, 25, 0);
+        trunkGrad.addColorStop(0, '#4e342e');
+        trunkGrad.addColorStop(0.5, '#5d4037');
+        trunkGrad.addColorStop(1, '#3e2723');
+        ctx.fillStyle = trunkGrad;
+
+        // Trunk outline
+        ctx.beginPath();
+        ctx.moveTo(-28, 0); // Left root flare
+        ctx.quadraticCurveTo(-18, -25, -16, -h * 0.35);
+        ctx.quadraticCurveTo(-22, -h * 0.5, -35, -h * 0.65); // Left fork branch
+        ctx.lineTo(-24, -h * 0.68);
+        ctx.quadraticCurveTo(-10, -h * 0.52, -4, -h * 0.45);
+        ctx.quadraticCurveTo(8, -h * 0.55, 32, -h * 0.64); // Right fork branch
+        ctx.lineTo(38, -h * 0.60);
+        ctx.quadraticCurveTo(20, -h * 0.48, 16, -h * 0.35);
+        ctx.quadraticCurveTo(18, -22, 28, 0); // Right root flare
+        ctx.closePath();
+        ctx.fill();
+
+        // Bark texture lines
+        ctx.strokeStyle = '#2d1d17';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(-10, -8);
+        ctx.quadraticCurveTo(-8, -h * 0.2, -6, -h * 0.36);
+        ctx.moveTo(3, -5);
+        ctx.quadraticCurveTo(7, -h * 0.22, 6, -h * 0.4);
+        ctx.moveTo(-18, -h * 0.45);
+        ctx.lineTo(-26, -h * 0.6);
+        ctx.moveTo(10, -h * 0.42);
+        ctx.lineTo(24, -h * 0.58);
+        ctx.stroke();
+
+        // Subtle moss/lichen at base
+        ctx.fillStyle = 'rgba(76, 175, 80, 0.4)';
+        ctx.beginPath();
+        ctx.ellipse(-8, -4, 10, 4, 0.2, 0, Math.PI * 2);
+        ctx.ellipse(8, -3, 8, 3, -0.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 3. Multi-Tiered Foliage Canopy with natural breeze
+        const wind = Math.sin(animTime * 2.2) * 3;
+        const windFine = Math.cos(animTime * 3.1) * 2;
+
+        const canopyLayers = [
+          // Background Deep Shadow Foliage
+          { cx: -32 + wind * 0.3, cy: -h * 0.68, rx: 46, ry: 38, col: '#1b5e20' },
+          { cx: 34 + wind * 0.3, cy: -h * 0.66, rx: 48, ry: 40, col: '#1b5e20' },
+          { cx: 0 + wind * 0.4, cy: -h * 0.82, rx: 54, ry: 44, col: '#1e6827' },
+          // Mid Canopy Clusters
+          { cx: -42 + wind * 0.6, cy: -h * 0.58, rx: 42, ry: 34, col: '#2e7d32' },
+          { cx: 44 + wind * 0.6, cy: -h * 0.56, rx: 44, ry: 36, col: '#2e7d32' },
+          { cx: -18 + wind * 0.7, cy: -h * 0.74, rx: 50, ry: 40, col: '#388e3c' },
+          { cx: 22 + wind * 0.7, cy: -h * 0.72, rx: 48, ry: 38, col: '#388e3c' },
+          // Foreground Sunlit Leaf Clusters
+          { cx: 0 + wind, cy: -h * 0.62, rx: 46, ry: 36, col: '#43a047' },
+          { cx: -28 + wind, cy: -h * 0.48, rx: 36, ry: 28, col: '#4caf50' },
+          { cx: 30 + wind, cy: -h * 0.47, rx: 38, ry: 30, col: '#4caf50' },
+          { cx: 0 + wind * 1.1, cy: -h * 0.88, rx: 34, ry: 26, col: '#66bb6a' }
+        ];
+
+        canopyLayers.forEach(c => {
+          ctx.fillStyle = c.col;
+          ctx.beginPath();
+          ctx.ellipse(c.cx, c.cy, c.rx, c.ry, 0, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // 4. Detailed Lanceolate Mango Leaves (Clusters hanging down)
+        const hangingLeafClusters = [
+          { x: -55 + wind * 0.8, y: -h * 0.45, rot: 0.3 },
+          { x: -35 + wind, y: -h * 0.38, rot: 0.1 },
+          { x: -10 + wind * 1.2, y: -h * 0.35, rot: -0.1 },
+          { x: 15 + wind * 1.1, y: -h * 0.36, rot: 0.2 },
+          { x: 40 + wind * 0.9, y: -h * 0.40, rot: -0.2 },
+          { x: 60 + wind * 0.7, y: -h * 0.46, rot: -0.35 }
+        ];
+
+        hangingLeafClusters.forEach(lc => {
+          ctx.save();
+          ctx.translate(lc.x, lc.y);
+          ctx.rotate(lc.rot);
+
+          // Render 3 overlapping pointed leaves
+          for (let i = -1; i <= 1; i++) {
+            ctx.save();
+            ctx.rotate(i * 0.28 + windFine * 0.04);
+            ctx.fillStyle = i === 0 ? '#81c784' : '#2e7d32';
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.quadraticCurveTo(-6, 12, 0, 26);
+            ctx.quadraticCurveTo(6, 12, 0, 0);
+            ctx.fill();
+
+            // Central vein
+            ctx.strokeStyle = '#c8e6c9';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, 22);
+            ctx.stroke();
+            ctx.restore();
+          }
+          ctx.restore();
+        });
+
+        // 5. Hanging Golden-Red Ripe Mangoes
+        const treeMangoes = [
+          { x: -38 + wind * 0.7, y: -h * 0.48, r: 8.5 },
+          { x: -12 + wind * 0.9, y: -h * 0.60, r: 9.5 },
+          { x: 26 + wind * 0.8, y: -h * 0.50, r: 9.0 },
+          { x: 46 + wind * 0.6, y: -h * 0.62, r: 8.0 }
+        ];
+
+        treeMangoes.forEach(m => {
+          // Mango stem
+          ctx.strokeStyle = '#5d4037';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(m.x, m.y - m.r - 8);
+          ctx.lineTo(m.x, m.y - m.r);
+          ctx.stroke();
+
+          // Mango fruit
+          const mg = ctx.createRadialGradient(m.x - 2, m.y - 3, 1, m.x, m.y, m.r);
+          mg.addColorStop(0, '#fff59d');
+          mg.addColorStop(0.35, '#ffca28');
+          mg.addColorStop(0.75, '#ff9800');
+          mg.addColorStop(1, '#e53935');
+          ctx.fillStyle = mg;
+
+          ctx.beginPath();
+          ctx.ellipse(m.x, m.y, m.r * 0.85, m.r * 1.15, 0.25, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // 6. Interactive / Quest Golden Shimmer (if quest active)
+        if (state === 'highlight' || state === 'quest') {
+          const shimmer = (Math.sin(animTime * 4) + 1) * 0.5;
+          ctx.strokeStyle = `rgba(255, 215, 0, ${0.4 + shimmer * 0.45})`;
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.ellipse(0, -h * 0.6, w * 0.48, h * 0.38, 0, 0, Math.PI * 2);
+          ctx.stroke();
+
+          // Sparkle stars
+          for (let sp = 0; sp < 4; sp++) {
+            const sx = Math.sin(animTime * 3 + sp * 1.6) * (w * 0.35);
+            const sy = -h * 0.45 - Math.cos(animTime * 2.5 + sp * 1.2) * (h * 0.25);
+            const sa = 0.5 + Math.sin(animTime * 5 + sp) * 0.5;
+            ctx.fillStyle = `rgba(255, 245, 157, ${sa})`;
+            ctx.beginPath();
+            ctx.arc(sx, sy, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+        ctx.restore();
+      }
+    });
   }
 
   /**

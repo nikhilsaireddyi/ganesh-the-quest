@@ -53,40 +53,5 @@ export class NPC {
       this.facing,
       this.animTime
     );
-
-    // Floating interaction prompt when near player
-    if (this.isNearPlayer && this.promptText) {
-      ctx.save();
-      const promptY = this.y - 82 + Math.sin(this.animTime * 4) * 3;
-      const promptStr = this.promptText;
-
-      ctx.font = 'bold 11px sans-serif';
-      const promptW = Math.max(72, ctx.measureText(promptStr).width + 22);
-
-      // Small speech bubble
-      ctx.fillStyle = 'rgba(255, 111, 0, 0.9)';
-      ctx.beginPath();
-      ctx.roundRect(this.x - promptW / 2, promptY - 14, promptW, 22, 6);
-      ctx.fill();
-      ctx.strokeStyle = '#ffd54f';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
-      // Pointer triangle
-      ctx.beginPath();
-      ctx.moveTo(this.x - 5, promptY + 8);
-      ctx.lineTo(this.x + 5, promptY + 8);
-      ctx.lineTo(this.x, promptY + 13);
-      ctx.closePath();
-      ctx.fill();
-
-      // Text
-      ctx.fillStyle = '#ffffff';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(promptStr, this.x, promptY - 3);
-
-      ctx.restore();
-    }
   }
 }

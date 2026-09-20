@@ -274,6 +274,19 @@ npm run preview
 
 ---
 
+## 👥 Credits — Team VIBΞX
+
+| Role & Meme Badge | Legend(s) Behind It | The True Lore |
+| :--- | :--- | :--- |
+| **👑 Project Lead**<br>`[ ⏰ "GUYS IS IT DONE YET?" ]` | **Harshini** | Supreme Commander of Deadlines & Team Panic.<br>*"The hackathon submission closes in 10 minutes, can we push to main now?!"* |
+| **📖 Story Writer**<br>`[ 🎭 PLOT ARMOR ARCHITECT ]` | **Lokeshwari** | Dialogue Alchemist & Quest Weaver.<br>*Turned 5 street errands into an emotional cinematic anime arc. "Trust the lore!"* |
+| **💻 Web Designer**<br>`[ 🎯 100% RESPONSIVE WIZARD ]` | **Polinaidu** | CSS Enchanter & Mobile Screen Conquering Hero.<br>*Fought margin-top on 50 devices and won. "Just add 5px padding bro."* |
+| **🎶 Props & Audio**<br>`[ 🎧 3 AM BASS & BELLS DJ ]` | **Venkat** | Synthesizer Extraordinaire & Interactive Prop Virtuoso.<br>*Crafted procedural temple bells and heavy dhol bass drops at midnight.* |
+| **🛠️ Background & Bug Fixes**<br>`[ ☕ 4 AM BUG EXTERMINATORS ]` | **Gnan Charan** & **Nikhil Sai Reddy** | Environmental Creators & StackOverflow Sages.<br>*Placed 1,000 houses & mango trees; fixed 99 bugs, created 128, and fixed all 128!* |
+| **⚡ Development Team** | **TEAM VIBΞX** | **0 Sleep • 5,000 Commits • Powered by Chai, Biryani, StackOverflow & Bappa's Blessings 🙏** |
+
+---
+
 ## 📜 License & Dedication
 
 Distributed under the **MIT License**. See `LICENSE` for details.

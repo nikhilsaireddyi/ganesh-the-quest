@@ -18,6 +18,7 @@ import { GeneratorRepair } from '../minigames/GeneratorRepair.js';
 import { SynchronizedLift } from '../minigames/SynchronizedLift.js';
 import { ModakCooking } from '../minigames/ModakCooking.js';
 import { AartiRitual } from '../minigames/AartiRitual.js';
+import { MangoLeavesMinigame } from '../minigames/MangoLeavesMinigame.js';
 import { achievementSystem } from '../systems/AchievementSystem.js';
 import { SaveSystem } from '../core/SaveSystem.js';
 
@@ -127,7 +128,7 @@ export class StreetScene {
       this.game.dialogue.start('Festival Uncle', [
         "What a magnificent flower garland! The fragrance fills the street.",
         "Now we must decorate the sacred pandal! Look along the street for 5 items:",
-        "1. Toran at House 1  2. Fresh Flowers  3. Banners from me",
+        "1. Mango Leaves from Tree  2. Fresh Flowers  3. Banners from me",
         "4. Saffron Silk Cloth at Temple  5. Fairy Lights from Electrician!"
       ]);
     });
@@ -144,6 +145,16 @@ export class StreetScene {
       this.game.dialogue.start('Electrician', [
         "The pandal looks breathtaking with all the silk and toran!",
         "Now come over to the switchboard so we can connect the electrical wiring and light up the pandal!"
+      ]);
+    });
+
+    // 3b. Mango Leaves Minigame (Plucking auspicious leaves into bag beside House 1)
+    this.mangoLeavesMinigame = new MangoLeavesMinigame(() => {
+      this.decorationsCollector.collect('toran', this.game.particles);
+      this.player.canMove = true;
+      this.dialogueCooldown = 0.3;
+      this.game.dialogue.start('Festival Uncle', [
+        "Auspicious green mango leaves! Perfect for Lord Ganesha's sacred Toran archway!"
       ]);
     });
 
@@ -363,6 +374,13 @@ export class StreetScene {
       }
       return;
     }
+    if (this.mangoLeavesMinigame && this.mangoLeavesMinigame.active) {
+      this.mangoLeavesMinigame.update(dt, modalInput, this.game.particles);
+      if (!this.mangoLeavesMinigame.active && !this.game.dialogue.active) {
+        this.player.canMove = true;
+      }
+      return;
+    }
     if (this.mandapamCollapseCinematic.active) {
       this.updateMandapamCollapseCinematic(dt);
       return;
@@ -487,7 +505,17 @@ export class StreetScene {
 
     // 3. Decorations Collection Items (Never open dialogue while picking up items!)
     if (currentMission === 'DECORATE_MANDAPAM') {
+      // Mango Tree Interaction: Pluck leaves into bag
+      if (!this.decorationsCollector.isItemCollected('toran') && Math.abs(this.player.x - 560) < 95) {
+        if (!this.mangoLeavesMinigame.active) {
+          this.player.canMove = false;
+          this.mangoLeavesMinigame.start();
+          return;
+        }
+      }
+
       for (const item of this.decorationsCollector.items) {
+        if (item.id === 'toran') continue; // Handled by Mango Tree minigame
         if (!item.collected && Math.abs(this.player.x - item.x) < 85) {
           this.decorationsCollector.collect(item.id, this.game.particles);
           return;
@@ -712,6 +740,10 @@ export class StreetScene {
 
     // Buildings & Props
     this.game.assetRegistry.draw(ctx, 'HOUSE_SPRITE', 450, 540, 220, 200, '1');
+    // Auspicious Mango Tree right beside House 1 (Leaves & Toran quest location)
+    const toranCollected = this.decorationsCollector.isItemCollected('toran');
+    const treeState = (!toranCollected && this.game.missions.currentMissionId === 'DECORATE_MANDAPAM') ? 'highlight' : 'default';
+    this.game.assetRegistry.draw(ctx, 'MANGO_TREE_SPRITE', 560, 540, 170, 230, treeState, 1, this.game.dayNight.time);
     this.game.assetRegistry.draw(ctx, 'HOUSE_SPRITE', 950, 540, 220, 200, '2');
     this.game.assetRegistry.draw(ctx, 'TEMPLE_SPRITE', 1800, 540, 260, 280);
     this.game.assetRegistry.draw(ctx, 'GENERATOR_SPRITE', 2100, 540, 70, 55, this.generatorState);
@@ -802,6 +834,7 @@ export class StreetScene {
     this.renderMinigameModal(ctx, this.liftMinigame);
     this.renderMinigameModal(ctx, this.modakMinigame);
     this.renderMinigameModal(ctx, this.aartiRitual);
+    this.renderMinigameModal(ctx, this.mangoLeavesMinigame);
 
     // Dialogue Box
     this.game.dialogue.render(ctx);
@@ -833,6 +866,7 @@ export class StreetScene {
       (this.liftMinigame && this.liftMinigame.active) ||
       (this.modakMinigame && this.modakMinigame.active) ||
       (this.aartiRitual && this.aartiRitual.active) ||
+      (this.mangoLeavesMinigame && this.mangoLeavesMinigame.active) ||
       (this.mandapamCollapseCinematic && this.mandapamCollapseCinematic.active) ||
       (this.lightUpCinematic && this.lightUpCinematic.active) ||
       (this.ganeshaRevealCinematic && this.ganeshaRevealCinematic.active) ||
@@ -930,6 +964,27 @@ export class StreetScene {
     ctx.closePath();
   }
 
+  getActiveStoryNPC() {
+    const currentMission = this.game.missions.currentMissionId;
+    switch (currentMission) {
+      case 'FLOWER_PUZZLE':
+        return this.npcs.find(n => n.id === 'flower_seller') || null;
+      case 'ELECTRICAL_WIRING':
+      case 'GENERATOR_REPAIR':
+        return this.npcs.find(n => n.id === 'electrician') || null;
+      case 'COOK_MODAKS':
+        return this.npcs.find(n => n.id === 'child') || null;
+      case 'BUILD_MANDAPAM':
+      case 'DECORATE_MANDAPAM':
+      case 'GANESHA_REVEAL':
+      case 'STORM_PROTECT':
+      case 'AARTI_RITUAL':
+      case 'SYNCHRONIZED_LIFT':
+      default:
+        return this.npcs.find(n => n.id === 'uncle') || null;
+    }
+  }
+
   renderGoHereIndicator(ctx, targetX, targetY, label, isUrgent = false) {
     if (!Number.isFinite(targetX) || !Number.isFinite(targetY) || !label) return;
 
@@ -939,25 +994,27 @@ export class StreetScene {
     const jumpFreq = 5.2;
     const bounceCycle = (t * jumpFreq) % Math.PI;
     const jumpProgress = Math.sin(bounceCycle);
-    const jumpHeight = 22;
+    const jumpHeight = 10;
     const jumpY = -jumpProgress * jumpHeight;
     const isNearGround = jumpProgress < 0.15;
-    const squashX = isNearGround ? 1.25 : 0.95;
-    const squashY = isNearGround ? 0.75 : 1.05;
+    const squashX = isNearGround ? 1.15 : 0.98;
+    const squashY = isNearGround ? 0.85 : 1.02;
 
     ctx.save();
 
-    // 1. Beacon ring at target
-    const beaconR = 15 + Math.sin(t * 4) * 4;
-    ctx.strokeStyle = isUrgent ? 'rgba(239, 68, 68, 0.75)' : 'rgba(255, 193, 7, 0.75)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.ellipse(targetX, targetY, beaconR, beaconR * 0.38, 0, 0, Math.PI * 2);
-    ctx.stroke();
+    // 1. Beacon ring at target — only for ground-level targets
+    if (targetY >= 500) {
+      const beaconR = 15 + Math.sin(t * 4) * 4;
+      ctx.strokeStyle = isUrgent ? 'rgba(239, 68, 68, 0.75)' : 'rgba(255, 193, 7, 0.75)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(targetX, targetY, beaconR, beaconR * 0.38, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
 
-    // 2. Bouncing downward arrow
-    const tipY = targetY - 10 + jumpY;
-    const arrowGrad = ctx.createLinearGradient(targetX, tipY - 26, targetX, tipY + 1);
+    // 2. Bouncing downward arrow hovering directly over target
+    const tipY = targetY - 4 + jumpY;
+    const arrowGrad = ctx.createLinearGradient(targetX, tipY - 20, targetX, tipY + 1);
     if (isUrgent) {
       arrowGrad.addColorStop(0, '#fca5a5');
       arrowGrad.addColorStop(0.5, '#ef4444');
@@ -972,53 +1029,53 @@ export class StreetScene {
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(targetX, tipY);
-    ctx.lineTo(targetX - 13 * squashX, tipY - 14 * squashY);
-    ctx.lineTo(targetX - 6 * squashX, tipY - 14 * squashY);
-    ctx.lineTo(targetX - 6 * squashX, tipY - 24 * squashY);
-    ctx.lineTo(targetX + 6 * squashX, tipY - 24 * squashY);
-    ctx.lineTo(targetX + 6 * squashX, tipY - 14 * squashY);
-    ctx.lineTo(targetX + 13 * squashX, tipY - 14 * squashY);
+    ctx.lineTo(targetX - 11 * squashX, tipY - 11 * squashY);
+    ctx.lineTo(targetX - 5 * squashX, tipY - 11 * squashY);
+    ctx.lineTo(targetX - 5 * squashX, tipY - 18 * squashY);
+    ctx.lineTo(targetX + 5 * squashX, tipY - 18 * squashY);
+    ctx.lineTo(targetX + 5 * squashX, tipY - 11 * squashY);
+    ctx.lineTo(targetX + 11 * squashX, tipY - 11 * squashY);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
-    // 3. Floating badge above arrow
+    // 3. Floating badge sitting directly above arrow
     const tagTitle = isUrgent ? '! SECURE HERE' : '* GO HERE *';
     const tagSub = String(label).toUpperCase();
-    ctx.font = 'bold 11px sans-serif';
+    ctx.font = 'bold 10px sans-serif';
     const w1 = ctx.measureText(tagTitle).width;
     const w2 = ctx.measureText(tagSub).width;
-    const pillW = Math.max(96, Math.max(w1, w2) + 26);
-    const pillH = 36;
+    const pillW = Math.max(90, Math.max(w1, w2) + 22);
+    const pillH = 32;
     const pillX = targetX - pillW / 2;
-    const badgeY = tipY - 32;
+    const badgeY = tipY - 22;
     const pillTop = badgeY - pillH;
 
     // Outer pill
     ctx.fillStyle = 'rgba(15, 23, 42, 0.96)';
-    this._roundRect(ctx, pillX, pillTop, pillW, pillH, 8);
+    this._roundRect(ctx, pillX, pillTop, pillW, pillH, 7);
     ctx.fill();
     ctx.strokeStyle = isUrgent ? '#ef4444' : '#ffd54f';
     ctx.lineWidth = 2;
-    this._roundRect(ctx, pillX, pillTop, pillW, pillH, 8);
+    this._roundRect(ctx, pillX, pillTop, pillW, pillH, 7);
     ctx.stroke();
 
     // Top colour accent bar
     ctx.fillStyle = isUrgent ? '#b91c1c' : '#f59e0b';
-    this._roundRect(ctx, pillX + 1, pillTop + 1, pillW - 2, 14, 7);
+    this._roundRect(ctx, pillX + 1, pillTop + 1, pillW - 2, 13, 6);
     ctx.fill();
 
     // Title text
     ctx.fillStyle = isUrgent ? '#ffffff' : '#1e1b4b';
-    ctx.font = 'bold 10px sans-serif';
+    ctx.font = 'bold 9px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(tagTitle, targetX, pillTop + 8);
+    ctx.fillText(tagTitle, targetX, pillTop + 7);
 
     // Label text
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 11px sans-serif';
-    ctx.fillText(tagSub, targetX, pillTop + 24);
+    ctx.font = 'bold 10px sans-serif';
+    ctx.fillText(tagSub, targetX, pillTop + 22);
 
     ctx.restore();
   }
@@ -1027,127 +1084,119 @@ export class StreetScene {
   renderQuestPointers(ctx) {
     if (this.isMinigameActive() || (this.game.dialogue && this.game.dialogue.active)) return;
 
-    // GO HERE floats 50px above the target — just above the [ACT] action prompt
-    const GO_HERE_OFFSET = 50;
-    const isMobile = this.game.input.isMobile;
+    const isMobile = this.game.input && this.game.input.isMobile;
     const actKey = isMobile ? 'ACT' : 'E';
 
     try {
       const currentMission = this.game.missions.currentMissionId;
 
       // ── BUILD MANDAPAM ──────────────────────────────────────────────────────
+      // Important objective ONLY: Mandapam Frame until built
       if (currentMission === 'BUILD_MANDAPAM') {
-        // Point to NPC (Festival Uncle) first, then mandapam when near Uncle
-        const activeNPC = this.getActiveStoryNPC();
-        if (activeNPC) {
-          const isNear = Math.abs(this.player.x - activeNPC.x) < 85;
-          const label = isNear ? `[${actKey}] TALK` : activeNPC.label;
-          this.renderGoHereIndicator(ctx, activeNPC.x, activeNPC.y - GO_HERE_OFFSET, label);
+        if (this.mandapam.state === 'empty') {
+          const isNear = this.mandapam.isNearPlayer;
+          const label = isNear ? `[${actKey}] BUILD` : 'Mandapam Frame';
+          this.renderGoHereIndicator(ctx, 1400, 360, label);
         }
-        // Also show on the mandapam frame as the action site
-        this.renderGoHereIndicator(ctx, 1400, 540 - GO_HERE_OFFSET, 'Mandapam Frame');
       }
 
       // ── FLOWER PUZZLE ────────────────────────────────────────────────────────
+      // Important objective ONLY: Flower Seller until garland completed
       else if (currentMission === 'FLOWER_PUZZLE') {
-        const activeNPC = this.getActiveStoryNPC();
+        const activeNPC = this.npcs.find(n => n.id === 'flower_seller');
         if (activeNPC) {
           const isNear = Math.abs(this.player.x - activeNPC.x) < 85;
-          const label = isNear ? `[${actKey}] TALK` : activeNPC.label;
-          this.renderGoHereIndicator(ctx, activeNPC.x, activeNPC.y - GO_HERE_OFFSET, label);
+          const label = isNear ? `[${actKey}] TALK` : (activeNPC.name || 'Flower Seller');
+          this.renderGoHereIndicator(ctx, activeNPC.x, activeNPC.y - 75, label);
         }
       }
 
       // ── DECORATE MANDAPAM ────────────────────────────────────────────────────
+      // Important objectives ONLY: Uncollected decoration items (orange buttons)
       else if (currentMission === 'DECORATE_MANDAPAM') {
-        if (this.decorationsCollector.isComplete()) {
-          // All collected → point to Festival Uncle to deliver
-          const activeNPC = this.getActiveStoryNPC();
-          if (activeNPC) {
-            const isNear = Math.abs(this.player.x - activeNPC.x) < 85;
-            const label = isNear ? `[${actKey}] TALK` : activeNPC.label;
-            this.renderGoHereIndicator(ctx, activeNPC.x, activeNPC.y - GO_HERE_OFFSET, label);
-          }
-        } else {
-          // Show GO HERE over every uncollected decoration item
-          this.decorationsCollector.items.forEach(item => {
-            if (!item.collected) {
-              this.renderGoHereIndicator(ctx, item.x, item.y - GO_HERE_OFFSET, item.name);
+        const animTime = Date.now() * 0.005;
+        this.decorationsCollector.items.forEach(item => {
+          if (!item.collected) {
+            if (item.id === 'toran') {
+              // Mango Tree pointer: sits right above mango tree canopy
+              const isNear = Math.abs(this.player.x - 560) < 95;
+              const label = isNear ? `[${actKey}] PLUCK LEAVES` : 'Mango Tree';
+              this.renderGoHereIndicator(ctx, 560, 390, label);
+            } else {
+              const floatY = item.y + Math.sin(animTime * 4 + item.x) * 6;
+              const isNear = Math.abs(this.player.x - item.x) < 75;
+              const label = isNear ? `[${actKey}] COLLECT` : item.name;
+              this.renderGoHereIndicator(ctx, item.x, floatY - 18, label);
             }
-          });
-        }
+          }
+        });
       }
 
       // ── ELECTRICAL WIRING ────────────────────────────────────────────────────
+      // Important objective ONLY: Electrician until wiring work is complete
       else if (currentMission === 'ELECTRICAL_WIRING') {
-        const activeNPC = this.getActiveStoryNPC();
+        const activeNPC = this.npcs.find(n => n.id === 'electrician');
         if (activeNPC) {
           const isNear = Math.abs(this.player.x - activeNPC.x) < 85;
-          const label = isNear ? `[${actKey}] TALK` : activeNPC.label;
-          this.renderGoHereIndicator(ctx, activeNPC.x, activeNPC.y - GO_HERE_OFFSET, label);
+          const label = isNear ? `[${actKey}] WIRING` : (activeNPC.name || 'Electrician');
+          this.renderGoHereIndicator(ctx, activeNPC.x, activeNPC.y - 75, label);
         }
       }
 
       // ── COOK MODAKS ──────────────────────────────────────────────────────────
+      // Important objective ONLY: Ananya until modaks are cooked
       else if (currentMission === 'COOK_MODAKS') {
-        const activeNPC = this.getActiveStoryNPC();
+        const activeNPC = this.npcs.find(n => n.id === 'child');
         if (activeNPC) {
           const isNear = Math.abs(this.player.x - activeNPC.x) < 85;
-          const label = isNear ? `[${actKey}] TALK` : activeNPC.label;
-          this.renderGoHereIndicator(ctx, activeNPC.x, activeNPC.y - GO_HERE_OFFSET, label);
+          const label = isNear ? `[${actKey}] COOK MODAKS` : (activeNPC.name || 'Ananya');
+          this.renderGoHereIndicator(ctx, activeNPC.x, activeNPC.y - 75, label);
         }
       }
 
       // ── GANESHA REVEAL ───────────────────────────────────────────────────────
+      // Important objective ONLY: Lord Ganesha
       else if (currentMission === 'GANESHA_REVEAL') {
-        const activeNPC = this.getActiveStoryNPC();
-        if (activeNPC) {
-          const isNear = Math.abs(this.player.x - activeNPC.x) < 85;
-          const label = isNear ? `[${actKey}] TALK` : activeNPC.label;
-          this.renderGoHereIndicator(ctx, activeNPC.x, activeNPC.y - GO_HERE_OFFSET, label);
-        }
-        this.renderGoHereIndicator(ctx, 1400, 480 - GO_HERE_OFFSET, 'Lord Ganesha');
+        const isNear = Math.abs(this.player.x - 1400) < 110;
+        const label = isNear ? `[${actKey}] BLESSING` : 'Lord Ganesha';
+        this.renderGoHereIndicator(ctx, 1400, 390, label);
       }
 
       // ── STORM PROTECT ────────────────────────────────────────────────────────
+      // Important objectives ONLY: Unsecured storm hotspots
       else if (currentMission === 'STORM_PROTECT') {
         const unfastened = this.stormProtection.hotspots.filter(h => !h.secured);
         unfastened.forEach(h => {
-          this.renderGoHereIndicator(ctx, h.x, h.y - GO_HERE_OFFSET, h.name, true);
+          const isNear = Math.abs(this.player.x - h.x) < 65;
+          const label = isNear ? `[${actKey}] SECURE` : h.name;
+          this.renderGoHereIndicator(ctx, h.x, h.y - 20, label, true);
         });
       }
 
       // ── GENERATOR REPAIR ─────────────────────────────────────────────────────
+      // Important objective ONLY: Generator until repaired
       else if (currentMission === 'GENERATOR_REPAIR') {
-        const activeNPC = this.getActiveStoryNPC();
-        if (activeNPC) {
-          const isNear = Math.abs(this.player.x - activeNPC.x) < 85;
-          const label = isNear ? `[${actKey}] TALK` : activeNPC.label;
-          this.renderGoHereIndicator(ctx, activeNPC.x, activeNPC.y - GO_HERE_OFFSET, label);
+        if (this.generatorState !== 'running') {
+          const isNear = Math.abs(this.player.x - 2100) < 110;
+          const label = isNear ? `[${actKey}] REPAIR` : 'Generator';
+          this.renderGoHereIndicator(ctx, 2100, 460, label);
         }
-        this.renderGoHereIndicator(ctx, 2100, 480 - GO_HERE_OFFSET, 'Generator');
       }
 
       // ── AARTI RITUAL ─────────────────────────────────────────────────────────
+      // Important objective ONLY: Maha Aarti at Mandapam
       else if (currentMission === 'AARTI_RITUAL') {
-        const activeNPC = this.getActiveStoryNPC();
-        if (activeNPC) {
-          const isNear = Math.abs(this.player.x - activeNPC.x) < 85;
-          const label = isNear ? `[${actKey}] TALK` : activeNPC.label;
-          this.renderGoHereIndicator(ctx, activeNPC.x, activeNPC.y - GO_HERE_OFFSET, label);
-        }
-        this.renderGoHereIndicator(ctx, 1400, 540 - GO_HERE_OFFSET, 'Maha Aarti');
+        const isNear = this.mandapam.isNearPlayer;
+        const label = isNear ? `[${actKey}] AARTI` : 'Maha Aarti';
+        this.renderGoHereIndicator(ctx, 1400, 380, label);
       }
 
       // ── SYNCHRONIZED LIFT ────────────────────────────────────────────────────
+      // Important objective ONLY: Lift Palanquin at Mandapam
       else if (currentMission === 'SYNCHRONIZED_LIFT') {
-        const activeNPC = this.getActiveStoryNPC();
-        if (activeNPC) {
-          const isNear = Math.abs(this.player.x - activeNPC.x) < 85;
-          const label = isNear ? `[${actKey}] TALK` : activeNPC.label;
-          this.renderGoHereIndicator(ctx, activeNPC.x, activeNPC.y - GO_HERE_OFFSET, label);
-        }
-        this.renderGoHereIndicator(ctx, 1400, 540 - GO_HERE_OFFSET, 'Lift Palanquin');
+        const isNear = this.mandapam.isNearPlayer;
+        const label = isNear ? `[${actKey}] LIFT` : 'Lift Palanquin';
+        this.renderGoHereIndicator(ctx, 1400, 380, label);
       }
 
     } catch (err) {

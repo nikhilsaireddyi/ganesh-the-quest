@@ -142,6 +142,12 @@ export class TitleScene {
       ctx.fillText(b.text, cx, b.y + 32);
     });
 
+    // Team VIBΞX Presentation Credit
+    ctx.fillStyle = '#fef08a';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('⚡ Presented with Devotion by Team VIBΞX ⚡', cx, 665);
+
     ctx.restore();
 
     // 7. Modals
