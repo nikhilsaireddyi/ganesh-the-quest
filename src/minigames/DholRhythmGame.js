@@ -290,8 +290,17 @@ export class DholRhythmGame {
     if (this.completed) {
       ctx.save();
       ctx.fillStyle = 'rgba(0, 200, 83, 0.95)';
+      const line1 = 'PROCESSION RHYTHM TRIUMPH! 🥁✨';
+      const line2 = `Final Score: ${this.score} | Bappa is Pleased!`;
+      ctx.font = 'bold 24px sans-serif';
+      const w1 = ctx.measureText(line1).width;
+      ctx.font = 'bold 15px sans-serif';
+      const w2 = ctx.measureText(line2).width;
+      const boxW = Math.max(580, Math.max(w1, w2) + 100);
+      const boxX = 640 - boxW / 2;
+
       ctx.beginPath();
-      ctx.roundRect(400, 310, 480, 85, 14);
+      ctx.roundRect(boxX, 305, boxW, 95, 16);
       ctx.fill();
       ctx.strokeStyle = '#ffd700';
       ctx.lineWidth = 3;
@@ -300,11 +309,11 @@ export class DholRhythmGame {
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 24px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('PROCESSION RHYTHM TRIUMPH! 🥁✨', 640, 350);
+      ctx.fillText(line1, 640, 345);
 
       ctx.fillStyle = '#ffecb3';
       ctx.font = 'bold 15px sans-serif';
-      ctx.fillText(`Final Score: ${this.score} | Bappa is Pleased!`, 640, 378);
+      ctx.fillText(line2, 640, 377);
       ctx.restore();
     }
 

@@ -183,9 +183,19 @@ export class SynchronizedLift {
 
     // Success Shout Banner
     if (this.completed) {
+      ctx.save();
       ctx.fillStyle = 'rgba(255, 143, 0, 0.95)';
+      const line1 = 'GANPATI BAPPA MORYA! 🙏';
+      const line2 = 'The palanquin rises with thunderous devotion!';
+      ctx.font = 'bold 30px sans-serif';
+      const w1 = ctx.measureText(line1).width;
+      ctx.font = '20px sans-serif';
+      const w2 = ctx.measureText(line2).width;
+      const boxW = Math.max(640, Math.max(w1, w2) + 100);
+      const boxX = 640 - boxW / 2;
+
       ctx.beginPath();
-      ctx.roundRect(360, 270, 560, 110, 16);
+      ctx.roundRect(boxX, 265, boxW, 115, 16);
       ctx.fill();
       ctx.strokeStyle = '#ffd700';
       ctx.lineWidth = 4;
@@ -193,10 +203,12 @@ export class SynchronizedLift {
 
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 30px sans-serif';
-      ctx.fillText('GANPATI BAPPA MORYA! 🙏', 640, 325);
+      ctx.textAlign = 'center';
+      ctx.fillText(line1, 640, 320);
       ctx.font = '20px sans-serif';
       ctx.fillStyle = '#fff9c4';
-      ctx.fillText('The palanquin rises with thunderous devotion!', 640, 360);
+      ctx.fillText(line2, 640, 358);
+      ctx.restore();
     }
 
     ctx.restore();

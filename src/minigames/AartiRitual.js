@@ -313,8 +313,17 @@ export class AartiRitual {
     if (this.completed) {
       ctx.save();
       ctx.fillStyle = 'rgba(0, 200, 83, 0.95)';
+      const line1 = 'AARTI COMPLETE! ✨🙏';
+      const line2 = '"May Lord Ganesha remove all obstacles from your path!"';
+      ctx.font = 'bold 24px sans-serif';
+      const w1 = ctx.measureText(line1).width;
+      ctx.font = 'italic 16px sans-serif';
+      const w2 = ctx.measureText(line2).width;
+      const boxW = Math.max(600, Math.max(w1, w2) + 100);
+      const boxX = 640 - boxW / 2;
+
       ctx.beginPath();
-      ctx.roundRect(380, 280, 520, 90, 16);
+      ctx.roundRect(boxX, 275, boxW, 100, 16);
       ctx.fill();
       ctx.strokeStyle = '#ffd700';
       ctx.lineWidth = 3;
@@ -323,11 +332,11 @@ export class AartiRitual {
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 24px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('AARTI COMPLETE! ✨🙏', 640, 320);
+      ctx.fillText(line1, 640, 318);
 
       ctx.fillStyle = '#ffecb3';
       ctx.font = 'italic 16px sans-serif';
-      ctx.fillText('"May Lord Ganesha remove all obstacles from your path!"', 640, 350);
+      ctx.fillText(line2, 640, 352);
       ctx.restore();
     }
 

@@ -30,6 +30,51 @@ export class ElectricalWiring {
 
     this.activeDrag = null;
     this.dragPos = { x: 0, y: 0 };
+
+    this.randomizeTerminals();
+  }
+
+  shuffle(array) {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  randomizeTerminals() {
+    const ys = [240, 330, 420, 510];
+
+    // 1. Fully randomize Left Terminal positions with Fisher-Yates
+    const leftYs = this.shuffle(ys);
+    this.leftTerminals.forEach((lt, idx) => {
+      lt.y = leftYs[idx];
+      lt.connectedTo = null;
+    });
+
+    // 2. Fully randomize Right Terminal positions with Fisher-Yates
+    // Ensure puzzle has engaging cross-over wires rather than straight horizontal lines
+    let rightYs;
+    let attempts = 0;
+    do {
+      rightYs = this.shuffle(ys);
+      attempts++;
+      let straightWires = 0;
+      this.leftTerminals.forEach(lt => {
+        const rt = this.rightTerminals.find(r => r.id === lt.id);
+        const rIndex = this.rightTerminals.indexOf(rt);
+        if (rightYs[rIndex] === lt.y) {
+          straightWires++;
+        }
+      });
+      if (straightWires <= 1 || attempts > 20) break;
+    } while (attempts < 25);
+
+    this.rightTerminals.forEach((rt, idx) => {
+      rt.y = rightYs[idx];
+      rt.powered = false;
+    });
   }
 
   start() {
@@ -37,15 +82,7 @@ export class ElectricalWiring {
     this.completed = false;
     this.completionTimer = 0;
     this.activeDrag = null;
-    this.leftTerminals.forEach(t => t.connectedTo = null);
-    this.rightTerminals.forEach(t => t.powered = false);
-
-    // Randomize right fixture positions so the puzzle is fresh every time
-    const ys = [240, 330, 420, 510];
-    const shuffledYs = [...ys].sort(() => Math.random() - 0.5);
-    this.rightTerminals.forEach((rt, idx) => {
-      rt.y = shuffledYs[idx];
-    });
+    this.randomizeTerminals();
   }
 
   update(dt, input, particles) {
@@ -83,7 +120,7 @@ export class ElectricalWiring {
           if (dist < lt.r + 14) {
             this.activeDrag = lt;
             this.dragPos = { x: mouse.x, y: mouse.y };
-            audioManager.playSnap();
+            audioManager.playPickup();
             break;
           }
         }
@@ -107,7 +144,8 @@ export class ElectricalWiring {
             this.activeDrag.connectedTo = rt;
             rt.powered = true;
             matched = true;
-            audioManager.playBell();
+            const connectedCount = this.rightTerminals.filter(r => r.powered).length;
+            audioManager.playPickup(connectedCount);
             particles.emitSparks(rt.x, rt.y, 16);
           } else {
             // Error mismatch
@@ -254,17 +292,22 @@ export class ElectricalWiring {
     if (this.completed) {
       ctx.save();
       ctx.fillStyle = 'rgba(0, 200, 83, 0.95)';
+      ctx.font = 'bold 24px sans-serif';
+      const text = 'CIRCUITS READY FOR ILLUMINATION! ⚡';
+      const textMetrics = ctx.measureText(text);
+      const boxW = Math.max(620, textMetrics.width + 100);
+      const boxX = 640 - boxW / 2;
+
       ctx.beginPath();
-      ctx.roundRect(400, 310, 480, 80, 12);
+      ctx.roundRect(boxX, 305, boxW, 88, 14);
       ctx.fill();
       ctx.strokeStyle = '#ffd700';
       ctx.lineWidth = 3;
       ctx.stroke();
 
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 24px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('CIRCUITS READY FOR ILLUMINATION! ⚡', 640, 358);
+      ctx.fillText(text, 640, 358);
       ctx.restore();
     }
 

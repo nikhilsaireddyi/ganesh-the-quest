@@ -16,11 +16,19 @@ export class Mandapam {
     this.isCollapsing = false;
     this.isCollapsed = false;
     this.collapseProgress = 0; // 0 to 1
+    this.hasWork = false;
+    this.interactLabel = '[E] WORK';
+  }
+
+  setWorkState(hasWork, label = '[E] WORK') {
+    this.hasWork = Boolean(hasWork);
+    if (label) this.interactLabel = label;
   }
 
   triggerCollapse() {
     this.isCollapsing = true;
     this.isLit = false;
+    this.hasWork = false;
   }
 
   update(dt, playerX) {
@@ -55,24 +63,26 @@ export class Mandapam {
       this.isLit
     );
 
-    // Interactive prompt if near and action is required
-    if (this.isNearPlayer && !this.isLit) {
+    // Interactive prompt ONLY if near and there is work to be done
+    if (this.isNearPlayer && this.hasWork && !this.isCollapsing && !this.isCollapsed) {
       ctx.save();
       const promptY = this.y - 200 + Math.sin(this.animTime * 3) * 4;
 
       ctx.fillStyle = 'rgba(255, 143, 0, 0.9)';
+      const text = this.interactLabel || '[E] WORK';
+      ctx.font = 'bold 12px sans-serif';
+      const promptW = Math.max(90, ctx.measureText(text).width + 24);
       ctx.beginPath();
-      ctx.roundRect(this.x - 45, promptY - 14, 90, 24, 6);
+      ctx.roundRect(this.x - promptW / 2, promptY - 14, promptW, 24, 6);
       ctx.fill();
       ctx.strokeStyle = '#ffd54f';
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 12px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('[E] WORK', this.x, promptY - 2);
+      ctx.fillText(text, this.x, promptY - 2);
       ctx.restore();
     }
   }

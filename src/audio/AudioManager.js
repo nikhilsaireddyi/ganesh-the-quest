@@ -135,6 +135,84 @@ export class AudioManager {
     });
   }
 
+  // --- CRISP, SPARKLING ITEM PICKUP CHIME ---
+  playPickup(comboIndex = 0) {
+    if (!this.ctx || this.isMuted) return;
+    this.vibrate([20]);
+    const t = this.ctx.currentTime;
+
+    // Bright ascending crystal chime (Glockenspiel / Magic Sparkle Arpeggio)
+    // Progressively higher musical chords as items are collected
+    const chords = [
+      [783.99, 1046.50, 1318.51],  // G5 -> C6 -> E6 (Crisp positive pickup)
+      [880.00, 1174.66, 1479.98],  // A5 -> D6 -> F#6
+      [987.77, 1318.51, 1661.22],  // B5 -> E6 -> G#6
+      [1046.50, 1396.91, 1760.00], // C6 -> F6 -> A6
+      [1174.66, 1567.98, 2093.00]  // D6 -> G6 -> C7 (Triumphant final pickup)
+    ];
+    const safeIdx = Math.max(0, Math.min(Number(comboIndex) || 0, chords.length - 1));
+    const notes = chords[safeIdx];
+
+    notes.forEach((freq, idx) => {
+      const noteTime = t + idx * 0.052;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      // Pure clear crystal bell tone
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, noteTime);
+
+      gain.gain.setValueAtTime(0.001, noteTime);
+      gain.gain.linearRampToValueAtTime(0.32 * this.sfxVolume, noteTime + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0005, noteTime + 0.28);
+
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+      osc.start(noteTime);
+      osc.stop(noteTime + 0.28);
+
+      // Shimmering octave harmonic
+      const overtone = this.ctx.createOscillator();
+      const overGain = this.ctx.createGain();
+      overtone.type = 'triangle';
+      overtone.frequency.setValueAtTime(freq * 2, noteTime);
+
+      overGain.gain.setValueAtTime(0.001, noteTime);
+      overGain.gain.linearRampToValueAtTime(0.12 * this.sfxVolume, noteTime + 0.008);
+      overGain.gain.exponentialRampToValueAtTime(0.0001, noteTime + 0.16);
+
+      overtone.connect(overGain);
+      overGain.connect(this.sfxGain);
+      overtone.start(noteTime);
+      overtone.stop(noteTime + 0.16);
+    });
+
+    // Magical item sparkle puff (soft high-pass glitter whoosh)
+    try {
+      const bufferSize = Math.floor(this.ctx.sampleRate * 0.07);
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+      }
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.setValueAtTime(3500, t);
+
+      const noiseGain = this.ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.14 * this.sfxVolume, t);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+
+      noise.connect(filter);
+      filter.connect(noiseGain);
+      noiseGain.connect(this.sfxGain);
+      noise.start(t);
+    } catch (_) {}
+  }
+
   playBell() {
     if (!this.ctx || this.isMuted) return;
     const t = this.ctx.currentTime;

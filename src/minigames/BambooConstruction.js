@@ -90,6 +90,7 @@ export class BambooConstruction {
             this.draggedPiece = piece;
             this.dragOffsetX = mouse.x - piece.x;
             this.dragOffsetY = mouse.y - piece.y;
+            audioManager.playPickup();
             break;
           }
         }
@@ -234,17 +235,22 @@ export class BambooConstruction {
     if (this.completed) {
       ctx.save();
       ctx.fillStyle = 'rgba(0, 200, 83, 0.95)';
+      ctx.font = 'bold 24px sans-serif';
+      const text = 'MANDAPAM FRAME COMPLETE! ✨';
+      const textMetrics = ctx.measureText(text);
+      const boxW = Math.max(560, textMetrics.width + 100);
+      const boxX = 640 - boxW / 2;
+
       ctx.beginPath();
-      ctx.roundRect(440, 280, 400, 80, 12);
+      ctx.roundRect(boxX, 276, boxW, 88, 14);
       ctx.fill();
       ctx.strokeStyle = '#ffd700';
       ctx.lineWidth = 3;
       ctx.stroke();
 
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 24px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('MANDAPAM FRAME COMPLETE! ✨', 640, 328);
+      ctx.fillText(text, 640, 329);
       ctx.restore();
     }
 

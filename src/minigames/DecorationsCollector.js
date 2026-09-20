@@ -28,7 +28,8 @@ export class DecorationsCollector {
     const item = this.items.find(i => i.id === id);
     if (item && !item.collected) {
       item.collected = true;
-      audioManager.playBell();
+      const count = this.getCollectedCount();
+      audioManager.playPickup(count - 1);
       if (particles) {
         particles.emitPetals(item.x, item.y, 20);
         particles.emitDivineAura(item.x, item.y, 10);
@@ -90,17 +91,18 @@ export class DecorationsCollector {
 
         // Name tag / Prompt
         ctx.fillStyle = isNear ? 'rgba(255, 111, 0, 0.95)' : 'rgba(15, 23, 42, 0.85)';
+        const tagText = isNear ? `[E] ${item.name}` : item.name;
+        ctx.font = isNear ? 'bold 11px sans-serif' : '10px sans-serif';
+        const tagW = Math.max(110, ctx.measureText(tagText).width + 20);
         ctx.beginPath();
-        ctx.roundRect(item.x - 55, floatY - 34, 110, 22, 6);
+        ctx.roundRect(item.x - tagW / 2, floatY - 34, tagW, 22, 6);
         ctx.fill();
         ctx.strokeStyle = isNear ? '#ffd700' : '#78909c';
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
         ctx.fillStyle = '#ffffff';
-        ctx.font = isNear ? 'bold 11px sans-serif' : '10px sans-serif';
-        ctx.fillText(isNear ? `[E] ${item.name}` : item.name, item.x, floatY - 23);
-
+        ctx.fillText(tagText, item.x, floatY - 23);
         ctx.restore();
       }
     });

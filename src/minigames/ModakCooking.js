@@ -379,17 +379,22 @@ export class ModakCooking {
     if (this.completed) {
       ctx.save();
       ctx.fillStyle = 'rgba(0, 200, 83, 0.95)';
+      ctx.font = 'bold 22px sans-serif';
+      const text = 'PRASAD COMPLETE! GANPATI BAPPA MORYA! 🙏';
+      const textMetrics = ctx.measureText(text);
+      const boxW = Math.max(620, textMetrics.width + 100);
+      const boxX = 640 - boxW / 2;
+
       ctx.beginPath();
-      ctx.roundRect(420, 540, 440, 65, 12);
+      ctx.roundRect(boxX, 535, boxW, 76, 14);
       ctx.fill();
       ctx.strokeStyle = '#ffd700';
       ctx.lineWidth = 3;
       ctx.stroke();
 
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 22px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('PRASAD COMPLETE! GANPATI BAPPA MORYA! 🙏', 640, 580);
+      ctx.fillText(text, 640, 581);
       ctx.restore();
     }
 

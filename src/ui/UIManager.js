@@ -373,7 +373,7 @@ export class UIManager {
       { name: 'H2', x: 950, color: '#e57373' },
       { name: '👴', x: 1050, color: '#ffb74d' },
       { name: '★', x: 1400, color: '#ffd700', big: true }, // Mandapam
-      { name: '👧', x: 1600, color: '#ba68c8' },
+      { name: '👧', x: 1670, color: '#ba68c8' },
       { name: '🛕', x: 1800, color: '#ff9800' },
       { name: '⚡', x: 2160, color: '#00e676' }
     ];

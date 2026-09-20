@@ -147,7 +147,7 @@ export class GeneratorRepair {
           this.plug.x = this.socket.x;
           this.plug.y = this.socket.y;
           this.step = 2;
-          audioManager.playBell();
+          audioManager.playPickup(1);
           particles.emitSparks(this.socket.x, this.socket.y, 16);
         } else {
           this.plug.x = this.plug.origX;
@@ -393,17 +393,22 @@ export class GeneratorRepair {
     if (this.completed) {
       ctx.save();
       ctx.fillStyle = 'rgba(0, 200, 83, 0.95)';
+      ctx.font = 'bold 22px sans-serif';
+      const text = 'ENGINE FIRING! RESTORING POWER... ⚡';
+      const textMetrics = ctx.measureText(text);
+      const boxW = Math.max(580, textMetrics.width + 100);
+      const boxX = 640 - boxW / 2;
+
       ctx.beginPath();
-      ctx.roundRect(420, 490, 440, 75, 12);
+      ctx.roundRect(boxX, 485, boxW, 82, 14);
       ctx.fill();
       ctx.strokeStyle = '#ffd700';
       ctx.lineWidth = 3;
       ctx.stroke();
 
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 22px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('ENGINE FIRING! RESTORING POWER... ⚡', 640, 536);
+      ctx.fillText(text, 640, 535);
       ctx.restore();
     }
 

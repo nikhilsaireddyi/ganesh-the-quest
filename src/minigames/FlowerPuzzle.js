@@ -112,7 +112,7 @@ export class FlowerPuzzle {
         if (dist < ft.r + 10) {
           this.dragged = ft;
           this.dragPos = { x: mouse.x, y: mouse.y };
-          audioManager.playSnap();
+          audioManager.playPickup();
           break;
         }
       }
@@ -130,7 +130,8 @@ export class FlowerPuzzle {
         if (dist < 45) {
           if (slot.expected === this.dragged.type) {
             slot.flower = this.dragged.type;
-            audioManager.playBell();
+            const placedCount = this.slots.filter(s => s.flower).length;
+            audioManager.playPickup(placedCount);
             particles.emitPetals(slot.x, slot.y, 8);
           } else {
             // Spark feedback for incorrect
@@ -341,17 +342,22 @@ export class FlowerPuzzle {
     if (this.completed) {
       ctx.save();
       ctx.fillStyle = 'rgba(0, 200, 83, 0.95)';
+      ctx.font = 'bold 24px sans-serif';
+      const text = 'GARLAND COMPLETE! 🌺';
+      const textMetrics = ctx.measureText(text);
+      const boxW = Math.max(540, textMetrics.width + 100);
+      const boxX = 640 - boxW / 2;
+
       ctx.beginPath();
-      ctx.roundRect(420, 310, 440, 80, 12);
+      ctx.roundRect(boxX, 305, boxW, 88, 14);
       ctx.fill();
       ctx.strokeStyle = '#ffd700';
       ctx.lineWidth = 3;
       ctx.stroke();
 
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 24px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('GARLAND COMPLETE! 🌺', 640, 358);
+      ctx.fillText(text, 640, 358);
       ctx.restore();
     }
 

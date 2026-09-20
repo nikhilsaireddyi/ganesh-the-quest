@@ -77,7 +77,7 @@ export class StreetScene {
         id: 'child',
         name: 'Ananya',
         spriteKey: 'CHILD_SPRITE',
-        x: 1600,
+        x: 1670,
         dialogues: {
           default: ["Ganpati Bappa Morya! I made modaks for Bappa!"]
         }
@@ -381,6 +381,26 @@ export class StreetScene {
 
     // Normal Gameplay Exploration
     this.player.update(dt, input);
+
+    // Determine if Mandapam currently has active work for the player
+    const currentMission = this.game.missions.currentMissionId;
+    const isMinigameActive = this.isMinigameActive();
+    const isDialogueActive = this.game.dialogue && this.game.dialogue.active;
+
+    let mandapamHasWork = false;
+    let mandapamLabel = '';
+
+    if (!isMinigameActive && !isDialogueActive) {
+      if (currentMission === 'BUILD_MANDAPAM' && this.mandapam.state === 'empty') {
+        mandapamHasWork = true;
+        mandapamLabel = '[E] BUILD';
+      } else if (currentMission === 'SYNCHRONIZED_LIFT') {
+        mandapamHasWork = true;
+        mandapamLabel = '[E] LIFT';
+      }
+    }
+
+    this.mandapam.setWorkState(mandapamHasWork, mandapamLabel);
     this.mandapam.update(dt, this.player.x);
     this.ganesha.update(dt);
     this.npcs.forEach(npc => npc.update(dt, this.player.x));
@@ -396,16 +416,11 @@ export class StreetScene {
 
     const currentMission = this.game.missions.currentMissionId;
 
-    // 1. Mandapam Interaction
+    // 1. Mandapam Interaction (only when work is required)
     if (this.mandapam.isNearPlayer) {
-      if (currentMission === 'BUILD_MANDAPAM' && !this.bambooMinigame.active) {
+      if (currentMission === 'BUILD_MANDAPAM' && this.mandapam.state === 'empty' && !this.bambooMinigame.active) {
         this.player.canMove = false;
         this.bambooMinigame.start();
-        return;
-      }
-      if (currentMission === 'ELECTRICAL_WIRING' && !this.wiringMinigame.active) {
-        this.player.canMove = false;
-        this.wiringMinigame.start();
         return;
       }
       if (currentMission === 'SYNCHRONIZED_LIFT' && !this.liftMinigame.active) {
@@ -795,11 +810,13 @@ export class StreetScene {
   }
 
   renderQuestPointers(ctx) {
+    if (this.isMinigameActive() || (this.game.dialogue && this.game.dialogue.active)) return;
+
     const currentMission = this.game.missions.currentMissionId;
     let targetX = null;
     let label = '';
 
-    if (currentMission === 'BUILD_MANDAPAM') {
+    if (currentMission === 'BUILD_MANDAPAM' && this.mandapam.state === 'empty') {
       targetX = 1400;
       label = '★ ASSEMBLE BAMBOO [E]';
     } else if (currentMission === 'FLOWER_PUZZLE') {
