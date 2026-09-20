@@ -324,16 +324,17 @@ export class UIManager {
     const gh = isMobile && layout ? layout.gulal.h : (isMobile ? 54 : 48);
 
     if (!isBlocked) {
+      const scale = layout && layout.scale ? layout.scale : 1;
       const isPressed = Boolean(this.game && this.game.input && this.game.input.mobileButtons && this.game.input.mobileButtons.gulal);
       ctx.fillStyle = isPressed ? '#be185d' : '#db2777';
       ctx.beginPath();
-      ctx.roundRect(gx, gy, gw, gh, 16);
+      ctx.roundRect(gx, gy, gw, gh, Math.round(16 * scale));
       ctx.fill();
       ctx.strokeStyle = isPressed ? '#ffffff' : '#fde047';
       ctx.lineWidth = isPressed ? 2.8 : 2.0;
       ctx.stroke();
       ctx.fillStyle = '#ffffff';
-      ctx.font = isMobile ? 'bold 15px sans-serif' : 'bold 13px sans-serif';
+      ctx.font = isMobile ? `bold ${Math.round(15 * scale)}px sans-serif` : 'bold 13px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(isMobile ? '🎨 GULAL' : '🎨 GULAL [Space]', gx + gw / 2, gy + gh / 2 + 5);
       ctx.textAlign = 'left';

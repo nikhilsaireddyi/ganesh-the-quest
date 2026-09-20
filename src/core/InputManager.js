@@ -139,25 +139,89 @@ export class InputManager {
     });
   }
 
-  // Mobile Touch Button Geometry (Dynamic based on virtualWidth & virtualHeight)
+  getButtonScale() {
+    const vw = this.engine ? this.engine.virtualWidth : 1280;
+    const vh = this.engine ? this.engine.virtualHeight : 720;
+    // Scale smoothly adapts based on virtual screen dimensions
+    const computed = (vh / 720) * 0.65 + (vw / 1280) * 0.35;
+    return Math.max(0.85, Math.min(1.3, computed));
+  }
+
+  // Mobile Touch Button Geometry (Dynamic based on screen dimensions & dynamic scale)
   getButtonLayout() {
     const vw = this.engine ? this.engine.virtualWidth : 1280;
     const vh = this.engine ? this.engine.virtualHeight : 720;
+    const scale = this.getButtonScale();
+
+    // Dynamic safe bottom & side padding so buttons don't sink down into gestures or bezels
+    // Shifted slightly towards the up (bottomPad ~80px on 720p vs previous 52px)
+    const bottomPad = Math.max(76, Math.round(vh * 0.115));
+    const sidePad = Math.max(55, Math.round(vw * 0.045));
+
+    // D-Pad left & right controlling buttons (slightly far apart from each other: 30px gap vs 14px)
+    const dirSize = Math.round(96 * scale);
+    const dirGap = Math.round(30 * scale);
+    const dirY = vh - bottomPad - dirSize;
+
+    const left = {
+      x: sidePad,
+      y: dirY,
+      w: dirSize,
+      h: dirSize
+    };
+
+    const right = {
+      x: sidePad + dirSize + dirGap,
+      y: dirY,
+      w: dirSize,
+      h: dirSize
+    };
+
+    // Action buttons on the right ([ ⚡ RUN ] & [ [E] ACT ])
+    // More far apart vertically (34px gap vs previous 16px)
+    const actW = Math.round(106 * scale);
+    const actH = Math.round(96 * scale);
+    const actX = vw - sidePad - actW;
+    const actY = dirY; // Align bottom baseline with D-Pad
+
+    const sprintW = actW;
+    const sprintH = Math.round(58 * scale);
+    const sprintX = actX;
+    const rightGap = Math.round(34 * scale); // Distinctly separated vertically
+    const sprintY = actY - rightGap - sprintH;
+
+    const sprint = {
+      x: sprintX,
+      y: sprintY,
+      w: sprintW,
+      h: sprintH
+    };
+
+    // Gulal festival celebrate button (aligned to the left of ACT button)
+    const gulalW = Math.round(128 * scale);
+    const gulalH = Math.round(54 * scale);
+    const gulalGap = Math.round(24 * scale);
+    const gulalX = actX - gulalGap - gulalW;
+    const gulalY = actY + actH - gulalH;
+
     return {
-      left: { x: 75, y: vh - 148, w: 96, h: 96 },
-      right: { x: 185, y: vh - 148, w: 96, h: 96 },
-      sprint: { x: vw - 192, y: vh - 222, w: 106, h: 58 },
-      interact: { x: vw - 190, y: vh - 148, w: 102, h: 96 },
-      gulal: { x: vw - 340, y: vh - 106, w: 128, h: 54 }
+      scale,
+      left,
+      right,
+      sprint,
+      interact: { x: actX, y: actY, w: actW, h: actH },
+      gulal: { x: gulalX, y: gulalY, w: gulalW, h: gulalH }
     };
   }
 
-  hitTest(btn, x, y, padding = 15) {
+  hitTest(btn, x, y, padding) {
+    const scale = this.getButtonScale();
+    const pad = padding !== undefined ? padding : Math.round(16 * scale);
     return (
-      x >= btn.x - padding &&
-      x <= btn.x + btn.w + padding &&
-      y >= btn.y - padding &&
-      y <= btn.y + btn.h + padding
+      x >= btn.x - pad &&
+      x <= btn.x + btn.w + pad &&
+      y >= btn.y - pad &&
+      y <= btn.y + btn.h + pad
     );
   }
 
@@ -270,26 +334,32 @@ export class InputManager {
 
     ctx.save();
     const layout = this.getButtonLayout();
+    const scale = layout.scale || 1.0;
+    const radius = Math.round(18 * scale);
+    const iconFont = `bold ${Math.round(34 * scale)}px sans-serif`;
+    const labelFont = `bold ${Math.round(15 * scale)}px sans-serif`;
+    const defaultLineWidth = Math.max(1.8, Math.round(2.0 * scale * 10) / 10);
+    const activeLineWidth = Math.max(2.4, Math.round(2.8 * scale * 10) / 10);
 
-    // Helper to render button with slightly larger size & modern styling
+    // Helper to render button with dynamic scale & modern styling
     const drawButton = (btn, label, icon, isPressed, color = '#ffd54f') => {
       ctx.fillStyle = isPressed ? 'rgba(255, 179, 0, 0.75)' : 'rgba(15, 23, 42, 0.78)';
       ctx.beginPath();
-      ctx.roundRect(btn.x, btn.y, btn.w, btn.h, 18);
+      ctx.roundRect(btn.x, btn.y, btn.w, btn.h, radius);
       ctx.fill();
 
       ctx.strokeStyle = isPressed ? '#ffffff' : color;
-      ctx.lineWidth = isPressed ? 2.8 : 2.0;
+      ctx.lineWidth = isPressed ? activeLineWidth : defaultLineWidth;
       ctx.stroke();
 
       ctx.fillStyle = '#ffffff';
       if (icon) {
-        ctx.font = 'bold 34px sans-serif';
+        ctx.font = iconFont;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(icon, btn.x + btn.w / 2, btn.y + btn.h / 2);
       } else if (label) {
-        ctx.font = 'bold 15px sans-serif';
+        ctx.font = labelFont;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(label, btn.x + btn.w / 2, btn.y + btn.h / 2);
