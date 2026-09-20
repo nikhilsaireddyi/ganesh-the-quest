@@ -472,25 +472,38 @@ export class UIManager {
     ctx.restore();
   }
 
-  renderContextPrompt(ctx, text = 'INTERACT [E]') {
+  renderContextPrompt(ctx, text = null) {
+    const isMobile = this.game && this.game.input && this.game.input.isMobile;
+    let displayText = text;
+    if (!displayText) {
+      displayText = isMobile ? 'PRESS [ACT] TO INTERACT' : 'PRESS [E] TO INTERACT';
+    } else if (isMobile) {
+      displayText = displayText.replace(/\[E\]/g, '[ACT]').replace(/press\s+e\b/gi, 'PRESS [ACT]');
+    } else {
+      displayText = displayText.replace(/\[ACT\]/g, '[E]').replace(/press\s+act\b/gi, 'PRESS [E]');
+    }
+
     const vw = this.game ? this.game.virtualWidth : 1280;
     const vh = this.game ? this.game.virtualHeight : 720;
     const cx = vw / 2;
 
     ctx.save();
-    ctx.fillStyle = 'rgba(255, 143, 0, 0.9)';
+    ctx.font = 'bold 15px sans-serif';
+    const textW = ctx.measureText(displayText).width;
+    const chipW = Math.max(220, textW + 36);
+
+    ctx.fillStyle = 'rgba(255, 143, 0, 0.92)';
     ctx.beginPath();
-    ctx.roundRect(cx - 120, vh - 160, 240, 46, 23);
+    ctx.roundRect(cx - chipW / 2, vh - 160, chipW, 46, 23);
     ctx.fill();
     ctx.strokeStyle = '#ffd54f';
     ctx.lineWidth = 2;
     ctx.stroke();
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 15px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(text, cx, vh - 137);
+    ctx.fillText(displayText, cx, vh - 137);
     ctx.restore();
   }
 

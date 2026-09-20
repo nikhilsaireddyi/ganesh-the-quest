@@ -10,7 +10,7 @@
 import { audioManager } from '../audio/AudioManager.js';
 
 const CABLE_TYPES = [
-  { name: '440V Main Cable', wire: '#d50000', plug: '#ff5252' },
+  { name: '220V Main Cable', wire: '#d50000', plug: '#ff5252' },
   { name: 'Backup Feed Line', wire: '#0288d1', plug: '#40c4ff' },
   { name: 'Generator Busbar', wire: '#fbc02d', plug: '#ffee58' },
   { name: 'Ground Earth Wire', wire: '#2e7d32', plug: '#69f0ae' },

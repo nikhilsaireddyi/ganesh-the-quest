@@ -688,7 +688,8 @@ export class ProcessionScene {
       ctx.font = 'bold 11px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('[E] TALK', compX, promptY - 1);
+      const actKey = this.game.input && this.game.input.isMobile ? 'ACT' : 'E';
+      ctx.fillText(`[${actKey}] TALK`, compX, promptY - 1);
       ctx.restore();
     }
   }
@@ -838,10 +839,12 @@ export class ProcessionScene {
       ctx.lineWidth = 2.5;
       ctx.stroke();
 
+      const isMobile = this.game.input && this.game.input.isMobile;
+      const dholText = isMobile ? '🥁 PLAY DHOL-TASHA [ACT]' : '🥁 PLAY DHOL-TASHA BEATS [E]';
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 15px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('🥁 PLAY DHOL-TASHA BEATS [E]', cx, py + 31);
+      ctx.fillText(dholText, cx, py + 31);
     }
 
     // Lezim Dance prompt (Dynamically positioned with safe bottom clearance on all displays)
@@ -856,10 +859,12 @@ export class ProcessionScene {
       ctx.lineWidth = 2.5;
       ctx.stroke();
 
+      const isMobile = this.game.input && this.game.input.isMobile;
+      const lezimText = isMobile ? '🔔 DANCE LEZIM FOLK DANCE [ACT]' : '🔔 DANCE LEZIM FOLK DANCE [E] / [L]';
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 15px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('🔔 DANCE LEZIM FOLK DANCE [E] / [L]', cx, py + 31);
+      ctx.fillText(lezimText, cx, py + 31);
     }
 
     ctx.restore();

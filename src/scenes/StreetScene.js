@@ -233,7 +233,7 @@ export class StreetScene {
     ]);
   }
 
-  exit() {}
+  exit() { }
 
   // --- CINEMATICS ---
 
@@ -406,19 +406,21 @@ export class StreetScene {
     const isMinigameActive = this.isMinigameActive();
     const isDialogueActive = this.game.dialogue && this.game.dialogue.active;
 
+    const isMobile = this.game.input.isMobile;
+    const actKey = isMobile ? 'ACT' : 'E';
     let mandapamHasWork = false;
     let mandapamLabel = '';
 
     if (!isMinigameActive && !isDialogueActive) {
       if (currentMission === 'BUILD_MANDAPAM' && this.mandapam.state === 'empty') {
         mandapamHasWork = true;
-        mandapamLabel = '[E] BUILD';
+        mandapamLabel = `[${actKey}] BUILD`;
       } else if (currentMission === 'AARTI_RITUAL') {
         mandapamHasWork = true;
-        mandapamLabel = '[E] AARTI';
+        mandapamLabel = `[${actKey}] AARTI`;
       } else if (currentMission === 'SYNCHRONIZED_LIFT') {
         mandapamHasWork = true;
-        mandapamLabel = '[E] LIFT';
+        mandapamLabel = `[${actKey}] LIFT`;
       }
     }
 
@@ -429,17 +431,17 @@ export class StreetScene {
     this.npcs.forEach(npc => {
       if (currentMission === 'DECORATE_MANDAPAM') {
         const hasItem = (npc.id === 'flower_seller' && !this.decorationsCollector.isItemCollected('flowers')) ||
-                        (npc.id === 'uncle' && !this.decorationsCollector.isItemCollected('banners')) ||
-                        (npc.id === 'electrician' && !this.decorationsCollector.isItemCollected('lights'));
-        npc.setPrompt(hasItem ? null : '[E] TALK');
+          (npc.id === 'uncle' && !this.decorationsCollector.isItemCollected('banners')) ||
+          (npc.id === 'electrician' && !this.decorationsCollector.isItemCollected('lights'));
+        npc.setPrompt(hasItem ? null : `[${actKey}] TALK`);
       } else if (currentMission === 'COOK_MODAKS' && npc.id === 'child') {
-        npc.setPrompt('[E] COOK MODAKS');
+        npc.setPrompt(`[${actKey}] COOK MODAKS`);
       } else if (currentMission === 'FLOWER_PUZZLE' && npc.id === 'flower_seller') {
-        npc.setPrompt('[E] WEAVE');
+        npc.setPrompt(`[${actKey}] WEAVE`);
       } else if (currentMission === 'ELECTRICAL_WIRING' && npc.id === 'electrician') {
-        npc.setPrompt('[E] WIRE');
+        npc.setPrompt(`[${actKey}] WIRE`);
       } else {
-        npc.setPrompt('[E] TALK');
+        npc.setPrompt(`[${actKey}] TALK`);
       }
       npc.update(dt, this.player.x);
     });
@@ -850,12 +852,27 @@ export class StreetScene {
     } else if (currentMission === 'FLOWER_PUZZLE') {
       targetX = 650;
       targetName = 'Flower Seller';
+    } else if (currentMission === 'DECORATE_MANDAPAM') {
+      const uncollected = this.decorationsCollector.items.find(i => !i.collected);
+      if (uncollected) {
+        targetX = uncollected.x;
+        targetName = uncollected.name;
+      } else {
+        targetX = 1400;
+        targetName = 'Mandapam (Finish)';
+      }
     } else if (currentMission === 'ELECTRICAL_WIRING') {
       targetX = 2160;
       targetName = 'Electrician';
     } else if (currentMission === 'COOK_MODAKS') {
       targetX = 1670;
       targetName = 'Ananya (Modaks)';
+    } else if (currentMission === 'GANESHA_REVEAL') {
+      targetX = 1400;
+      targetName = 'Mandapam (Ganesha)';
+    } else if (currentMission === 'STORM_PROTECT') {
+      targetX = 1400;
+      targetName = 'Mandapam Tarps';
     } else if (currentMission === 'GENERATOR_REPAIR') {
       targetX = 2100;
       targetName = 'Generator';
@@ -877,14 +894,15 @@ export class StreetScene {
       const chipH = 30;
       const cx = this.game.virtualWidth / 2;
       const chipX = cx - chipW / 2;
-      const chipY = 76;
+      // chipY = 94: safely below minimap (ends y:64) and SPRINT badge (ends y:86)
+      const chipY = 94;
 
       ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
-      ctx.beginPath();
-      ctx.roundRect(chipX, chipY, chipW, chipH, 15);
+      this._roundRect(ctx, chipX, chipY, chipW, chipH, 15);
       ctx.fill();
       ctx.strokeStyle = '#ffd54f';
       ctx.lineWidth = 1.5;
+      this._roundRect(ctx, chipX, chipY, chipW, chipH, 15);
       ctx.stroke();
 
       ctx.fillStyle = '#ffd54f';
@@ -895,66 +913,248 @@ export class StreetScene {
     }
   }
 
+
+  // Cross-browser safe rounded rectangle path (no ctx.roundRect dependency)
+  _roundRect(ctx, x, y, w, h, r) {
+    const maxR = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + maxR, y);
+    ctx.lineTo(x + w - maxR, y);
+    ctx.arcTo(x + w, y, x + w, y + maxR, maxR);
+    ctx.lineTo(x + w, y + h - maxR);
+    ctx.arcTo(x + w, y + h, x + w - maxR, y + h, maxR);
+    ctx.lineTo(x + maxR, y + h);
+    ctx.arcTo(x, y + h, x, y + h - maxR, maxR);
+    ctx.lineTo(x, y + maxR);
+    ctx.arcTo(x, y, x + maxR, y, maxR);
+    ctx.closePath();
+  }
+
+  renderGoHereIndicator(ctx, targetX, targetY, label, isUrgent = false) {
+    if (!Number.isFinite(targetX) || !Number.isFinite(targetY) || !label) return;
+
+    const t = Number.isFinite(this.animTime) ? this.animTime : (performance.now() / 1000);
+
+    // Dynamic bouncy jumping physics
+    const jumpFreq = 5.2;
+    const bounceCycle = (t * jumpFreq) % Math.PI;
+    const jumpProgress = Math.sin(bounceCycle);
+    const jumpHeight = 22;
+    const jumpY = -jumpProgress * jumpHeight;
+    const isNearGround = jumpProgress < 0.15;
+    const squashX = isNearGround ? 1.25 : 0.95;
+    const squashY = isNearGround ? 0.75 : 1.05;
+
+    ctx.save();
+
+    // 1. Beacon ring at target
+    const beaconR = 15 + Math.sin(t * 4) * 4;
+    ctx.strokeStyle = isUrgent ? 'rgba(239, 68, 68, 0.75)' : 'rgba(255, 193, 7, 0.75)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(targetX, targetY, beaconR, beaconR * 0.38, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 2. Bouncing downward arrow
+    const tipY = targetY - 10 + jumpY;
+    const arrowGrad = ctx.createLinearGradient(targetX, tipY - 26, targetX, tipY + 1);
+    if (isUrgent) {
+      arrowGrad.addColorStop(0, '#fca5a5');
+      arrowGrad.addColorStop(0.5, '#ef4444');
+      arrowGrad.addColorStop(1, '#991b1b');
+    } else {
+      arrowGrad.addColorStop(0, '#fff59d');
+      arrowGrad.addColorStop(0.4, '#ffb300');
+      arrowGrad.addColorStop(1, '#e65100');
+    }
+    ctx.fillStyle = arrowGrad;
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(targetX, tipY);
+    ctx.lineTo(targetX - 13 * squashX, tipY - 14 * squashY);
+    ctx.lineTo(targetX - 6 * squashX, tipY - 14 * squashY);
+    ctx.lineTo(targetX - 6 * squashX, tipY - 24 * squashY);
+    ctx.lineTo(targetX + 6 * squashX, tipY - 24 * squashY);
+    ctx.lineTo(targetX + 6 * squashX, tipY - 14 * squashY);
+    ctx.lineTo(targetX + 13 * squashX, tipY - 14 * squashY);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // 3. Floating badge above arrow
+    const tagTitle = isUrgent ? '! SECURE HERE' : '* GO HERE *';
+    const tagSub = String(label).toUpperCase();
+    ctx.font = 'bold 11px sans-serif';
+    const w1 = ctx.measureText(tagTitle).width;
+    const w2 = ctx.measureText(tagSub).width;
+    const pillW = Math.max(96, Math.max(w1, w2) + 26);
+    const pillH = 36;
+    const pillX = targetX - pillW / 2;
+    const badgeY = tipY - 32;
+    const pillTop = badgeY - pillH;
+
+    // Outer pill
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.96)';
+    this._roundRect(ctx, pillX, pillTop, pillW, pillH, 8);
+    ctx.fill();
+    ctx.strokeStyle = isUrgent ? '#ef4444' : '#ffd54f';
+    ctx.lineWidth = 2;
+    this._roundRect(ctx, pillX, pillTop, pillW, pillH, 8);
+    ctx.stroke();
+
+    // Top colour accent bar
+    ctx.fillStyle = isUrgent ? '#b91c1c' : '#f59e0b';
+    this._roundRect(ctx, pillX + 1, pillTop + 1, pillW - 2, 14, 7);
+    ctx.fill();
+
+    // Title text
+    ctx.fillStyle = isUrgent ? '#ffffff' : '#1e1b4b';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(tagTitle, targetX, pillTop + 8);
+
+    // Label text
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillText(tagSub, targetX, pillTop + 24);
+
+    ctx.restore();
+  }
+
+
   renderQuestPointers(ctx) {
     if (this.isMinigameActive() || (this.game.dialogue && this.game.dialogue.active)) return;
 
-    const currentMission = this.game.missions.currentMissionId;
-    let targetX = null;
-    let label = '';
+    // GO HERE floats 50px above the target — just above the [ACT] action prompt
+    const GO_HERE_OFFSET = 50;
+    const isMobile = this.game.input.isMobile;
+    const actKey = isMobile ? 'ACT' : 'E';
 
-    if (currentMission === 'BUILD_MANDAPAM') {
-      targetX = 1400;
-      label = 'Build Mandapam Frame';
-    } else if (currentMission === 'FLOWER_PUZZLE') {
-      targetX = 650;
-      label = 'Garland Flower Vendor';
-    } else if (currentMission === 'ELECTRICAL_WIRING') {
-      targetX = 2160;
-      label = 'Electrician Subhas';
-    } else if (currentMission === 'COOK_MODAKS') {
-      targetX = 1670;
-      label = 'Cook Modaks with Ananya';
-    } else if (currentMission === 'GENERATOR_REPAIR') {
-      targetX = 2100;
-      label = 'Diesel Generator';
-    } else if (currentMission === 'AARTI_RITUAL') {
-      targetX = 1400;
-      label = 'Perform Maha Aarti';
-    } else if (currentMission === 'SYNCHRONIZED_LIFT') {
-      targetX = 1400;
-      label = 'Lift Ganesha Palanquin';
-    }
+    try {
+      const currentMission = this.game.missions.currentMissionId;
 
-    if (targetX !== null) {
-      const screenPos = this.game.camera.worldToScreen(targetX, 500);
-      const pulse = Math.sin(this.animTime * 4) * 4;
+      // ── BUILD MANDAPAM ──────────────────────────────────────────────────────
+      if (currentMission === 'BUILD_MANDAPAM') {
+        // Point to NPC (Festival Uncle) first, then mandapam when near Uncle
+        const activeNPC = this.getActiveStoryNPC();
+        if (activeNPC) {
+          const isNear = Math.abs(this.player.x - activeNPC.x) < 85;
+          const label = isNear ? `[${actKey}] TALK` : activeNPC.label;
+          this.renderGoHereIndicator(ctx, activeNPC.x, activeNPC.y - GO_HERE_OFFSET, label);
+        }
+        // Also show on the mandapam frame as the action site
+        this.renderGoHereIndicator(ctx, 1400, 540 - GO_HERE_OFFSET, 'Mandapam Frame');
+      }
 
-      ctx.save();
-      ctx.fillStyle = '#ffd700';
-      ctx.beginPath();
-      ctx.moveTo(screenPos.x, screenPos.y - 20 + pulse);
-      ctx.lineTo(screenPos.x - 12, screenPos.y - 36 + pulse);
-      ctx.lineTo(screenPos.x + 12, screenPos.y - 36 + pulse);
-      ctx.closePath();
-      ctx.fill();
+      // ── FLOWER PUZZLE ────────────────────────────────────────────────────────
+      else if (currentMission === 'FLOWER_PUZZLE') {
+        const activeNPC = this.getActiveStoryNPC();
+        if (activeNPC) {
+          const isNear = Math.abs(this.player.x - activeNPC.x) < 85;
+          const label = isNear ? `[${actKey}] TALK` : activeNPC.label;
+          this.renderGoHereIndicator(ctx, activeNPC.x, activeNPC.y - GO_HERE_OFFSET, label);
+        }
+      }
 
-      // Mission Target Name Tag
-      ctx.fillStyle = 'rgba(10, 14, 26, 0.85)';
-      ctx.font = 'bold 11px sans-serif';
-      const tw = ctx.measureText(label).width;
-      ctx.beginPath();
-      ctx.roundRect(screenPos.x - (tw + 16) / 2, screenPos.y - 62 + pulse, tw + 16, 20, 4);
-      ctx.fill();
-      ctx.strokeStyle = '#ffb300';
-      ctx.lineWidth = 1;
-      ctx.stroke();
+      // ── DECORATE MANDAPAM ────────────────────────────────────────────────────
+      else if (currentMission === 'DECORATE_MANDAPAM') {
+        if (this.decorationsCollector.isComplete()) {
+          // All collected → point to Festival Uncle to deliver
+          const activeNPC = this.getActiveStoryNPC();
+          if (activeNPC) {
+            const isNear = Math.abs(this.player.x - activeNPC.x) < 85;
+            const label = isNear ? `[${actKey}] TALK` : activeNPC.label;
+            this.renderGoHereIndicator(ctx, activeNPC.x, activeNPC.y - GO_HERE_OFFSET, label);
+          }
+        } else {
+          // Show GO HERE over every uncollected decoration item
+          this.decorationsCollector.items.forEach(item => {
+            if (!item.collected) {
+              this.renderGoHereIndicator(ctx, item.x, item.y - GO_HERE_OFFSET, item.name);
+            }
+          });
+        }
+      }
 
-      ctx.fillStyle = '#ffd54f';
-      ctx.textAlign = 'center';
-      ctx.fillText(label, screenPos.x, screenPos.y - 48 + pulse);
-      ctx.restore();
+      // ── ELECTRICAL WIRING ────────────────────────────────────────────────────
+      else if (currentMission === 'ELECTRICAL_WIRING') {
+        const activeNPC = this.getActiveStoryNPC();
+        if (activeNPC) {
+          const isNear = Math.abs(this.player.x - activeNPC.x) < 85;
+          const label = isNear ? `[${actKey}] TALK` : activeNPC.label;
+          this.renderGoHereIndicator(ctx, activeNPC.x, activeNPC.y - GO_HERE_OFFSET, label);
+        }
+      }
+
+      // ── COOK MODAKS ──────────────────────────────────────────────────────────
+      else if (currentMission === 'COOK_MODAKS') {
+        const activeNPC = this.getActiveStoryNPC();
+        if (activeNPC) {
+          const isNear = Math.abs(this.player.x - activeNPC.x) < 85;
+          const label = isNear ? `[${actKey}] TALK` : activeNPC.label;
+          this.renderGoHereIndicator(ctx, activeNPC.x, activeNPC.y - GO_HERE_OFFSET, label);
+        }
+      }
+
+      // ── GANESHA REVEAL ───────────────────────────────────────────────────────
+      else if (currentMission === 'GANESHA_REVEAL') {
+        const activeNPC = this.getActiveStoryNPC();
+        if (activeNPC) {
+          const isNear = Math.abs(this.player.x - activeNPC.x) < 85;
+          const label = isNear ? `[${actKey}] TALK` : activeNPC.label;
+          this.renderGoHereIndicator(ctx, activeNPC.x, activeNPC.y - GO_HERE_OFFSET, label);
+        }
+        this.renderGoHereIndicator(ctx, 1400, 480 - GO_HERE_OFFSET, 'Lord Ganesha');
+      }
+
+      // ── STORM PROTECT ────────────────────────────────────────────────────────
+      else if (currentMission === 'STORM_PROTECT') {
+        const unfastened = this.stormProtection.hotspots.filter(h => !h.secured);
+        unfastened.forEach(h => {
+          this.renderGoHereIndicator(ctx, h.x, h.y - GO_HERE_OFFSET, h.name, true);
+        });
+      }
+
+      // ── GENERATOR REPAIR ─────────────────────────────────────────────────────
+      else if (currentMission === 'GENERATOR_REPAIR') {
+        const activeNPC = this.getActiveStoryNPC();
+        if (activeNPC) {
+          const isNear = Math.abs(this.player.x - activeNPC.x) < 85;
+          const label = isNear ? `[${actKey}] TALK` : activeNPC.label;
+          this.renderGoHereIndicator(ctx, activeNPC.x, activeNPC.y - GO_HERE_OFFSET, label);
+        }
+        this.renderGoHereIndicator(ctx, 2100, 480 - GO_HERE_OFFSET, 'Generator');
+      }
+
+      // ── AARTI RITUAL ─────────────────────────────────────────────────────────
+      else if (currentMission === 'AARTI_RITUAL') {
+        const activeNPC = this.getActiveStoryNPC();
+        if (activeNPC) {
+          const isNear = Math.abs(this.player.x - activeNPC.x) < 85;
+          const label = isNear ? `[${actKey}] TALK` : activeNPC.label;
+          this.renderGoHereIndicator(ctx, activeNPC.x, activeNPC.y - GO_HERE_OFFSET, label);
+        }
+        this.renderGoHereIndicator(ctx, 1400, 540 - GO_HERE_OFFSET, 'Maha Aarti');
+      }
+
+      // ── SYNCHRONIZED LIFT ────────────────────────────────────────────────────
+      else if (currentMission === 'SYNCHRONIZED_LIFT') {
+        const activeNPC = this.getActiveStoryNPC();
+        if (activeNPC) {
+          const isNear = Math.abs(this.player.x - activeNPC.x) < 85;
+          const label = isNear ? `[${actKey}] TALK` : activeNPC.label;
+          this.renderGoHereIndicator(ctx, activeNPC.x, activeNPC.y - GO_HERE_OFFSET, label);
+        }
+        this.renderGoHereIndicator(ctx, 1400, 540 - GO_HERE_OFFSET, 'Lift Palanquin');
+      }
+
+    } catch (err) {
+      console.error('Quest pointer render error:', err);
     }
   }
+
 
   // --- MANDAPAM COLLAPSE FAILURE CINEMATIC ---
 

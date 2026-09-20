@@ -82,20 +82,23 @@ export class ParallaxSystem {
     ctx.fillStyle = '#cfc5bb';
     ctx.fillRect(startX, 515, totalW, 25);
 
-    // Subtle paving slab joints along walkway
+    // Subtle paving slab joints along walkway (culled)
     ctx.strokeStyle = '#b8aca1';
     ctx.lineWidth = 1.5;
-    for (let x = startX; x < endX; x += 55) {
-      ctx.beginPath();
+    const slabStep = 55;
+    const slabStart = Math.floor(startX / slabStep) * slabStep;
+    ctx.beginPath();
+    for (let x = slabStart; x < endX; x += slabStep) {
       ctx.moveTo(x, 515);
       ctx.lineTo(x, 538);
-      ctx.stroke();
     }
+    ctx.stroke();
 
     // 2. Street Kerbstone (y: 538 - 546)
-    // Classic festive yellow-and-black painted kerbstones
+    // Classic festive yellow-and-black painted kerbstones (culled)
     const kerbW = 42;
-    for (let x = startX; x < endX; x += kerbW) {
+    const kerbStart = Math.floor(startX / kerbW) * kerbW;
+    for (let x = kerbStart; x < endX; x += kerbW) {
       const idx = Math.floor(Math.abs(x) / kerbW);
       ctx.fillStyle = idx % 2 === 0 ? '#ffb300' : '#1e293b';
       ctx.fillRect(x, 538, kerbW + 0.5, 8);
@@ -110,7 +113,6 @@ export class ParallaxSystem {
     ctx.fillRect(startX, 546, totalW, 4);
 
     // 3. Main Asphalt Roadway Surface (y: 546 - 1200)
-    // Rich dark tar / macadam asphalt road gradient
     const roadGrad = ctx.createLinearGradient(0, 546, 0, 950);
     roadGrad.addColorStop(0, '#2d3239');
     roadGrad.addColorStop(0.12, '#24272e');
@@ -118,9 +120,10 @@ export class ParallaxSystem {
     ctx.fillStyle = roadGrad;
     ctx.fillRect(startX, 546, totalW, 700);
 
-    // Subtle asphalt grain speckles (deterministic, non-flickering)
+    // Subtle asphalt grain speckles (deterministic, culled)
     ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
-    for (let x = startX; x < endX; x += 28) {
+    const speckleStart = Math.floor(startX / 28) * 28;
+    for (let x = speckleStart; x < endX; x += 28) {
       const hash = ((x * 13) ^ 0x5deece66d) & 0x7fffffff;
       const offY1 = 555 + (hash % 160);
       const offY2 = 610 + ((hash >> 4) % 180);

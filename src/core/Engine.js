@@ -98,8 +98,10 @@ export class Engine {
         this.camera.viewportHeight = this.virtualHeight;
       }
 
+      const isMobile = this.input ? this.input.isMobile : (window.innerWidth < 800 || 'ontouchstart' in window);
       const rawDpr = window.devicePixelRatio || 1;
-      const dpr = Math.min(Math.max(1, rawDpr), 2.5);
+      const maxDpr = isMobile ? 1.75 : 2.0;
+      const dpr = Math.min(Math.max(1, rawDpr), maxDpr);
 
       const targetWidth = Math.round(cssWidth * dpr);
       const targetHeight = Math.round(cssHeight * dpr);
@@ -158,17 +160,24 @@ export class Engine {
   }
 
   loop(currentTime) {
-    let dt = (currentTime - this.lastTime) / 1000;
-    this.lastTime = currentTime;
+    try {
+      let dt = (currentTime - this.lastTime) / 1000;
+      this.lastTime = currentTime;
 
-    // Clamp dt
-    if (dt > this.maxDt) dt = this.maxDt;
+      // Clamp dt to prevent spiral-of-death on lag spikes
+      if (dt > this.maxDt) dt = this.maxDt;
 
-    this.update(dt);
-    this.render();
+      this.update(dt);
+      this.render();
 
-    this.input.postUpdate();
-    requestAnimationFrame(this.loop.bind(this));
+      this.input.postUpdate();
+    } catch (err) {
+      // Log but do NOT let errors freeze the game loop
+      console.error('[Engine] Frame error (loop continues):', err);
+    } finally {
+      // requestAnimationFrame is ALWAYS scheduled, even after errors
+      requestAnimationFrame(this.loop.bind(this));
+    }
   }
 
   update(dt) {

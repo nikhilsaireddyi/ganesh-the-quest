@@ -52,81 +52,98 @@ export class ParticleSystem {
         p.vx *= 0.98;
       }
     }
+
+    // Cap maximum particles to prevent GC lag during intense storms or bursts
+    if (this.particles.length > 250) {
+      this.particles.splice(0, this.particles.length - 250);
+    }
   }
 
   render(ctx) {
-    // Render particles
+    if (this.particles.length === 0 && this.lightningAlpha <= 0) return;
+
+    // High-performance particle rendering
     for (const p of this.particles) {
       const progress = p.life / p.maxLife;
       const alpha = Math.max(0, Math.min(1, progress * (p.alpha || 1)));
-      ctx.save();
-      ctx.globalAlpha = alpha;
 
       if (p.type === 'petal') {
+        ctx.save();
+        ctx.globalAlpha = alpha;
         ctx.translate(p.x, p.y);
         ctx.rotate(p.angle);
         ctx.fillStyle = p.color;
         ctx.beginPath();
         ctx.ellipse(0, 0, p.size, p.size * 0.5, 0, 0, Math.PI * 2);
         ctx.fill();
-      } else if (p.type === 'rain') {
-        ctx.strokeStyle = 'rgba(180, 215, 255, 0.7)';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(p.x, p.y);
-        ctx.lineTo(p.x - p.vx * 0.04, p.y - p.vy * 0.04);
-        ctx.stroke();
-      } else if (p.type === 'spark') {
-        ctx.fillStyle = p.color || '#fff176';
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size * progress, 0, Math.PI * 2);
-        ctx.fill();
-      } else if (p.type === 'firework') {
-        ctx.fillStyle = p.color;
-        ctx.shadowColor = p.color;
-        ctx.shadowBlur = 8;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size * progress, 0, Math.PI * 2);
-        ctx.fill();
-      } else if (p.type === 'aura') {
-        ctx.fillStyle = '#ffd54f';
-        ctx.shadowColor = '#ffb300';
-        ctx.shadowBlur = 6;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size * progress, 0, Math.PI * 2);
-        ctx.fill();
-      } else if (p.type === 'ripple') {
-        ctx.strokeStyle = `rgba(100, 181, 246, ${alpha})`;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.stroke();
-      } else if (p.type === 'gulal') {
-        ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
-      } else if (p.type === 'dust') {
-        ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.restore();
       } else if (p.type === 'debris') {
+        ctx.save();
+        ctx.globalAlpha = alpha;
         ctx.translate(p.x, p.y);
         ctx.rotate(p.angle);
         ctx.fillStyle = p.color;
         ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
-      }
+        ctx.restore();
+      } else {
+        ctx.globalAlpha = alpha;
 
-      ctx.restore();
+        if (p.type === 'rain') {
+          ctx.strokeStyle = 'rgba(180, 215, 255, 0.7)';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p.x - p.vx * 0.04, p.y - p.vy * 0.04);
+          ctx.stroke();
+        } else if (p.type === 'spark') {
+          ctx.fillStyle = p.color || '#fff176';
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * progress, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (p.type === 'firework') {
+          // Fast glowing halo without GPU shadowBlur overhead
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = alpha * 0.35;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * progress * 1.8, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.globalAlpha = alpha;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * progress, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (p.type === 'aura') {
+          ctx.fillStyle = '#ffd54f';
+          ctx.globalAlpha = alpha * 0.35;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * progress * 1.8, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.globalAlpha = alpha;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * progress, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (p.type === 'ripple') {
+          ctx.strokeStyle = `rgba(100, 181, 246, ${alpha})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.stroke();
+        } else if (p.type === 'gulal' || p.type === 'dust') {
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
     }
+
+    ctx.globalAlpha = 1.0;
 
     // Lightning Flash overlay
     if (this.lightningAlpha > 0) {
-      ctx.save();
       ctx.fillStyle = `rgba(255, 255, 255, ${this.lightningAlpha * 0.75})`;
       ctx.fillRect(-2000, -2000, 10000, 10000);
-      ctx.restore();
     }
   }
 

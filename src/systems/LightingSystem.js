@@ -33,6 +33,10 @@ export class LightingSystem {
       for (const light of this.lights) {
         const screenPos = camera.worldToScreen(light.x, light.y);
         const rad = light.radius * camera.zoom;
+        if (screenPos.x + rad < -40 || screenPos.x - rad > camera.viewportWidth + 40 ||
+            screenPos.y + rad < -40 || screenPos.y - rad > camera.viewportHeight + 40) {
+          continue;
+        }
 
         const grad = ctx.createRadialGradient(
           screenPos.x, screenPos.y, 4,
@@ -56,6 +60,10 @@ export class LightingSystem {
       for (const light of this.lights) {
         const screenPos = camera.worldToScreen(light.x, light.y);
         const rad = light.radius * camera.zoom * 0.7;
+        if (screenPos.x + rad < -40 || screenPos.x - rad > camera.viewportWidth + 40 ||
+            screenPos.y + rad < -40 || screenPos.y - rad > camera.viewportHeight + 40) {
+          continue;
+        }
 
         const grad = ctx.createRadialGradient(
           screenPos.x, screenPos.y, 2,

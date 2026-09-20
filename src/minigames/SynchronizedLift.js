@@ -179,7 +179,8 @@ export class SynchronizedLift {
     ctx.fillStyle = '#ffd54f';
     ctx.font = 'bold 16px sans-serif';
     ctx.textBaseline = 'alphabetic';
-    ctx.fillText('TAP SCREEN / PRESS [E] ON "LIFT!"', 640, 514);
+    const isMobile = typeof window !== 'undefined' && ('ontouchstart' in window || window.innerWidth < 800);
+    ctx.fillText(isMobile ? 'PRESS [ACT] / TAP SCREEN ON "LIFT!"' : 'PRESS [E] / SPACE ON "LIFT!"', 640, 514);
 
     // Success Shout Banner
     if (this.completed) {

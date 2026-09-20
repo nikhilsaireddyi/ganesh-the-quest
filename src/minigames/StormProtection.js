@@ -41,8 +41,13 @@ export class StormProtection {
     for (const h of this.hotspots) {
       if (!h.secured) {
         const dist = Math.abs(playerX - h.x);
-        if (dist < 55) {
-          if (input.interactPressed || (input.mouse.justPressed && Math.hypot(input.mouse.x - h.x, input.mouse.y - h.y) < 60)) {
+        if (dist < 65) {
+          let clicked = false;
+          if (input.mouse && input.mouse.justPressed && this.game && this.game.camera) {
+            const screenPos = this.game.camera.worldToScreen(h.x, h.y);
+            clicked = Math.hypot(input.mouse.x - screenPos.x, input.mouse.y - screenPos.y) < 60;
+          }
+          if (input.interactPressed || clicked) {
             h.secured = true;
             audioManager.playSnap();
             particles.emitSparks(h.x, h.y - 40, 10);
@@ -103,7 +108,9 @@ export class StormProtection {
         ctx.fillRect(h.x - 45, hy - 32, 90, 18);
         ctx.fillStyle = '#ffea00';
         ctx.font = 'bold 11px sans-serif';
-        ctx.fillText(`SECURE [E]`, h.x, hy - 20);
+        const isMobile = this.game && this.game.input && this.game.input.isMobile;
+        const actKey = isMobile ? 'ACT' : 'E';
+        ctx.fillText(`SECURE [${actKey}]`, h.x, hy - 20);
 
         ctx.restore();
       }

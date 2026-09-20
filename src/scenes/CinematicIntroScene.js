@@ -103,7 +103,9 @@ export class CinematicIntroScene {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
     ctx.font = '13px sans-serif';
     ctx.textAlign = 'right';
-    ctx.fillText('Press [E] or Click to Skip ▶', vw - 30, 42);
+    const isMobile = this.game && this.game.input && this.game.input.isMobile;
+    const skipPrompt = isMobile ? 'Press ACT or Tap to Skip ▶' : 'Press [E] or Click to Skip ▶';
+    ctx.fillText(skipPrompt, vw - 30, 42);
 
     ctx.restore();
   }

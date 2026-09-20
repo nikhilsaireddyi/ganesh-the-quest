@@ -264,7 +264,9 @@ export class AchievementSystem {
     ctx.fillStyle = '#ffb300';
     ctx.font = 'bold 14px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('Click anywhere outside or press [E] to Close', 640, my + mh - 20);
+    const isMobile = typeof window !== 'undefined' && ('ontouchstart' in window || window.innerWidth < 800);
+    const closeText = isMobile ? 'Tap anywhere outside or press [ACT] to Close' : 'Click anywhere outside or press [E] to Close';
+    ctx.fillText(closeText, 640, my + mh - 20);
 
     ctx.restore();
   }

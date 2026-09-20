@@ -214,7 +214,9 @@ export class DialogueBox {
       ctx.fillStyle = '#ffd54f';
       ctx.font = 'bold 13px sans-serif';
       ctx.textAlign = 'right';
-      ctx.fillText('Press [E] or Tap to Continue ▼', bx + bw - 26, by + bh - 20);
+      const isMobile = this.game && this.game.input && this.game.input.isMobile;
+      const promptStr = isMobile ? 'Press ACT or Tap to Continue ▼' : 'Press [E] or Click to Continue ▼';
+      ctx.fillText(promptStr, bx + bw - 26, by + bh - 20);
     }
 
     ctx.restore();

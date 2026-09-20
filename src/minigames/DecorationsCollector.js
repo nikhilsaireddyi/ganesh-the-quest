@@ -96,7 +96,9 @@ export class DecorationsCollector {
 
         // Name tag / Prompt
         ctx.fillStyle = isNear ? 'rgba(255, 111, 0, 0.95)' : 'rgba(15, 23, 42, 0.85)';
-        const tagText = isNear ? `[E] ${item.name}` : item.name;
+        const isMobile = this.game && this.game.input && this.game.input.isMobile;
+        const actKey = isMobile ? 'ACT' : 'E';
+        const tagText = isNear ? `[${actKey}] ${item.name}` : item.name;
         ctx.font = isNear ? 'bold 11px sans-serif' : '10px sans-serif';
         const tagW = Math.max(110, ctx.measureText(tagText).width + 20);
         ctx.beginPath();
