@@ -376,7 +376,7 @@ export class InputManager {
     drawButton(layout.sprint, '⚡ RUN', null, this.mobileButtons.sprint, '#f59e0b');
 
     // 4. Mobile Interact Button
-    drawButton(layout.interact, '[E] ACT', null, this.mobileButtons.interact, '#ffd54f');
+    drawButton(layout.interact, 'ACT', null, this.mobileButtons.interact, '#ffd54f');
 
     ctx.restore();
   }
