@@ -34,38 +34,61 @@ if (typeof CanvasRenderingContext2D !== 'undefined' &&
 // ───────────────────────────────────────────────────────────────────────────
 
 
-window.addEventListener('DOMContentLoaded', () => {
+function initGame() {
   const canvas = document.getElementById('gameCanvas');
-  const engine = new Engine(canvas);
-  window.__engine = engine;
-
-  // Audio unlock banner interaction
-  const audioBanner = document.getElementById('audio-banner');
-  const unlockAudio = () => {
-    audioManager.resume();
-    if (audioBanner) {
-      audioBanner.classList.add('hidden');
-    }
-    window.removeEventListener('click', unlockAudio);
-    window.removeEventListener('keydown', unlockAudio);
-    window.removeEventListener('touchstart', unlockAudio);
-    if (audioBanner) {
-      audioBanner.removeEventListener('click', unlockAudio);
-      audioBanner.removeEventListener('touchstart', unlockAudio);
-    }
-    canvas.removeEventListener('touchstart', unlockAudio);
-    canvas.removeEventListener('click', unlockAudio);
-  };
-
-  window.addEventListener('click', unlockAudio);
-  window.addEventListener('keydown', unlockAudio);
-  window.addEventListener('touchstart', unlockAudio, { passive: true });
-  if (audioBanner) {
-    audioBanner.addEventListener('click', unlockAudio);
-    audioBanner.addEventListener('touchstart', unlockAudio, { passive: true });
+  if (!canvas) {
+    console.error('[Engine] gameCanvas not found!');
+    return;
   }
-  canvas.addEventListener('click', unlockAudio);
-  canvas.addEventListener('touchstart', unlockAudio, { passive: true });
 
-  engine.start();
-});
+  try {
+    const engine = new Engine(canvas);
+    window.__engine = engine;
+
+    // Audio unlock banner interaction
+    const audioBanner = document.getElementById('audio-banner');
+    const unlockAudio = () => {
+      audioManager.resume();
+      if (audioBanner) {
+        audioBanner.classList.add('hidden');
+      }
+      window.removeEventListener('click', unlockAudio);
+      window.removeEventListener('keydown', unlockAudio);
+      window.removeEventListener('touchstart', unlockAudio);
+      if (audioBanner) {
+        audioBanner.removeEventListener('click', unlockAudio);
+        audioBanner.removeEventListener('touchstart', unlockAudio);
+      }
+      canvas.removeEventListener('touchstart', unlockAudio);
+      canvas.removeEventListener('click', unlockAudio);
+    };
+
+    window.addEventListener('click', unlockAudio);
+    window.addEventListener('keydown', unlockAudio);
+    window.addEventListener('touchstart', unlockAudio, { passive: true });
+    if (audioBanner) {
+      audioBanner.addEventListener('click', unlockAudio);
+      audioBanner.addEventListener('touchstart', unlockAudio, { passive: true });
+    }
+    canvas.addEventListener('click', unlockAudio);
+    canvas.addEventListener('touchstart', unlockAudio, { passive: true });
+
+    engine.start();
+    console.log('[Engine] Game engine initialized and running successfully!');
+  } catch (err) {
+    console.error('[Engine] Critical startup failure:', err);
+    // Display fallback on screen so any issue is immediately transparent
+    const errBox = document.createElement('div');
+    errBox.style.cssText = 'position:fixed;top:20%;left:10%;right:10%;background:#b91c1c;color:#fff;padding:24px;border-radius:12px;font-family:sans-serif;z-index:99999;box-shadow:0 10px 30px rgba(0,0,0,0.6);text-align:center;';
+    errBox.innerHTML = `<h3 style="font-size:20px;margin-bottom:8px;">⚠️ Game Initialization Error</h3><p style="font-size:14px;opacity:0.9;">${err.message || err}</p><button onclick="if('caches' in window){caches.keys().then(k=>Promise.all(k.map(c=>caches.delete(c)))).then(()=>location.reload(true));}else{location.reload(true);}" style="margin-top:16px;padding:10px 20px;background:#ffd700;color:#111;border:none;border-radius:8px;cursor:pointer;font-weight:bold;font-size:14px;">Clear Cache & Reload</button>`;
+    document.body.appendChild(errBox);
+  }
+}
+
+// Safely execute whether DOM has already completed parsing or is still loading
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', initGame);
+} else {
+  initGame();
+}
+

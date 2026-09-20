@@ -109,8 +109,8 @@ export class Engine {
       if (this.canvas.width !== targetWidth || this.canvas.height !== targetHeight) {
         this.canvas.width = targetWidth;
         this.canvas.height = targetHeight;
-        this.dprScale = targetWidth / this.virtualWidth;
       }
+      this.dprScale = targetWidth / this.virtualWidth;
     };
 
     window.addEventListener('resize', resize);

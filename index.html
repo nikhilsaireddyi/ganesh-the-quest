@@ -19,7 +19,7 @@
     </div>
     <script type="module" src="/src/main.js"></script>
     <script>
-      // In development / localhost, ensure any service workers and caches are cleared to avoid intercepting Vite HMR
+      // Service worker management: clear obsolete caches & keep live builds in sync
       if ('serviceWorker' in navigator) {
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
           navigator.serviceWorker.getRegistrations().then((regs) => {
@@ -31,8 +31,14 @@
             });
           }
         } else if (window.location.protocol.startsWith('http')) {
+          // Immediately purge old broken cache versions if present
+          if (window.caches) {
+            caches.delete('ganesh-quest-v1').catch(() => {});
+          }
           window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js').catch(() => {});
+            navigator.serviceWorker.register('/sw.js').then((reg) => {
+              reg.update();
+            }).catch(() => {});
           });
         }
       }
