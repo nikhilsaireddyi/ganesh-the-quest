@@ -12,7 +12,7 @@ export class ParallaxSystem {
   renderBackground(ctx, camera) {
     const camX = camera.x || 0;
     // Parallax vertical adjustment for PC vs Mobile floor positioning
-    const camY = (camera && camera.y !== undefined) ? camera.y : (camera && camera.isMobile ? 555 : 410);
+    const camY = (camera && camera.y !== undefined) ? camera.y : (camera && camera.isMobile ? 490 : 410);
     const yShift = (410 - camY) * 0.7;
 
     // LAYER 1: Distant City & Temple Silhouettes (Speed: 0.15)

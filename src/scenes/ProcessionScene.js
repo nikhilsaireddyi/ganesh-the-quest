@@ -291,7 +291,7 @@ export class ProcessionScene {
 
     // Camera follows smoothly slightly ahead of chariot
     this.game.camera.targetX = this.chariotX + 180;
-    this.game.camera.targetY = this.game.input.isMobile ? 555 : 410;
+    this.game.camera.targetY = this.game.input.isMobile ? 490 : 410;
 
     // Player can explore freely left/right along the procession
     const moveX = input.axisX;
