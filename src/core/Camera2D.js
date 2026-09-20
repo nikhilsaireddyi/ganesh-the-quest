@@ -39,7 +39,7 @@ export class Camera2D {
     this.isScripted = false;
   }
 
-  setBounds(minX, maxX, minY = 0, maxY = 720) {
+  setBounds(minX, maxX, minY = 0, maxY = 950) {
     this.minX = minX;
     this.maxX = maxX;
     this.minY = minY;
@@ -49,17 +49,19 @@ export class Camera2D {
   follow(entity, isMobile = this.isMobile) {
     if (this.isScripted) return;
     this.targetX = entity.x;
-    // On mobile: floor is in the middle (entity.y - 40) because touch buttons are at the bottom.
-    // On PC: floor is slightly lower to the bottom (entity.y - 130) because buttons are not there.
-    const yOffset = isMobile ? 40 : 130;
+    // On mobile: floor/road is positioned much higher towards the middle (screenY ~345-360)
+    // leaving the spacious lower half for touch buttons without overlapping objects.
+    // On PC: floor is near the bottom (screenY ~490) where it fits perfectly with keyboard controls.
+    const yOffset = isMobile ? -15 : 130;
     this.targetY = entity.y - yOffset;
   }
 
   panTo(x, y, zoom = 1.0, speed = 0.05) {
     this.isScripted = true;
     this.targetX = x;
+    const mobileShift = this.isMobile ? 135 : 0;
     const pcOffset = !this.isMobile ? 90 : 0;
-    this.targetY = y - pcOffset;
+    this.targetY = y - pcOffset + mobileShift;
     this.targetZoom = zoom;
     this.lerpSpeed = speed;
   }

@@ -12,8 +12,8 @@ export class ParallaxSystem {
   renderBackground(ctx, camera) {
     const camX = camera.x || 0;
     // Parallax vertical adjustment for PC vs Mobile floor positioning
-    const camY = (camera && camera.y !== undefined) ? camera.y : (camera && camera.isMobile ? 500 : 410);
-    const yShift = (500 - camY) * 0.7;
+    const camY = (camera && camera.y !== undefined) ? camera.y : (camera && camera.isMobile ? 555 : 410);
+    const yShift = (410 - camY) * 0.7;
 
     // LAYER 1: Distant City & Temple Silhouettes (Speed: 0.15)
     ctx.save();
@@ -30,7 +30,7 @@ export class ParallaxSystem {
       ctx.fill();
 
       // Flat roof building silhouettes with domes
-      ctx.fillRect(x + 140, 380 + yShift * 0.4, 160, 120);
+      ctx.fillRect(x + 140, 380 + yShift * 0.4, 160, 240);
       ctx.beginPath();
       ctx.arc(x + 220, 380 + yShift * 0.4, 30, Math.PI, 0);
       ctx.fill();
@@ -45,7 +45,7 @@ export class ParallaxSystem {
 
     for (let x = -900 + layer2Offset; x < camera.viewportWidth + 900; x += 450) {
       // Houses (extended downwards so no gap ever appears above the street road)
-      ctx.fillRect(x, 390 + yShift * 0.8, 240, 260);
+      ctx.fillRect(x, 390 + yShift * 0.8, 240, 360);
 
       // Pitched clay roof
       ctx.fillStyle = '#d84315';
@@ -62,7 +62,7 @@ export class ParallaxSystem {
       ctx.arc(x + 360, 410 + yShift * 0.8, 60, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = '#4e342e';
-      ctx.fillRect(x + 350, 450 + yShift * 0.8, 20, 120);
+      ctx.fillRect(x + 350, 450 + yShift * 0.8, 20, 180);
 
       ctx.fillStyle = '#795548';
     }

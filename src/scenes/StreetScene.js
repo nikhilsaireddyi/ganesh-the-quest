@@ -214,7 +214,7 @@ export class StreetScene {
   }
 
   enter() {
-    this.game.camera.setBounds(0, 3000, 0, 720);
+    this.game.camera.setBounds(0, 3000, 0, 950);
     this.game.camera.releaseScripted();
     this.game.camera.follow(this.player, this.game.input.isMobile);
     this.game.camera.x = this.game.camera.targetX;
