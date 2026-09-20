@@ -75,7 +75,7 @@ export class SceneManager {
     if (this.transitionAlpha > 0.01) {
       ctx.save();
       ctx.fillStyle = `rgba(10, 14, 26, ${this.transitionAlpha})`;
-      ctx.fillRect(0, 0, 1280, 720);
+      ctx.fillRect(0, 0, this.game.virtualWidth, this.game.virtualHeight);
       ctx.restore();
     }
   }

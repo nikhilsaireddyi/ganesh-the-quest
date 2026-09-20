@@ -198,7 +198,7 @@ export class VisarjanScene {
 
   render(ctx) {
     // 1. Sky & Celestial Backdrop (Screen space)
-    this.game.dayNight.renderSky(ctx, 1280, 720);
+    this.game.dayNight.renderSky(ctx, this.game.virtualWidth, this.game.virtualHeight);
 
     // 2. World Elements transformed by Camera (Pan from Shore to Deep Water)
     this.game.camera.begin(ctx);
@@ -518,22 +518,27 @@ export class VisarjanScene {
     if (this.stageTimer > 14.5) {
       const alpha = Math.min(1.0, (this.stageTimer - 14.5) * 0.75);
       // Dark vignette fade
+      const vw = this.game.virtualWidth;
+      const vh = this.game.virtualHeight;
+      const cx = vw / 2;
+      const cy = vh / 2;
+
       ctx.fillStyle = `rgba(5, 10, 20, ${alpha * 0.88})`;
-      ctx.fillRect(0, 0, 1280, 720);
+      ctx.fillRect(0, 0, vw, vh);
 
       // Parting verses
       ctx.fillStyle = `rgba(255, 236, 179, ${alpha})`;
       ctx.font = 'italic 26px serif';
       ctx.textAlign = 'center';
-      ctx.fillText('"Every goodbye carries the promise of another beginning."', 640, 320);
+      ctx.fillText('"Every goodbye carries the promise of another beginning."', cx, cy - 40);
 
       ctx.fillStyle = `rgba(255, 215, 0, ${alpha * 0.95})`;
       ctx.font = 'bold 28px sans-serif';
-      ctx.fillText('Ganpati Bappa Morya! Pudhchya Varshi Lavkar Ya 🙏', 640, 380);
+      ctx.fillText('Ganpati Bappa Morya! Pudhchya Varshi Lavkar Ya 🙏', cx, cy + 20);
 
       ctx.fillStyle = `rgba(200, 230, 255, ${alpha * 0.8})`;
       ctx.font = '17px sans-serif';
-      ctx.fillText('May Lord Ganesha dissolve all obstacles and bless every path ahead.', 640, 425);
+      ctx.fillText('May Lord Ganesha dissolve all obstacles and bless every path ahead.', cx, cy + 65);
     }
     ctx.restore();
   }

@@ -105,11 +105,12 @@ export class InputManager {
 
   getCanvasCoords(clientX, clientY) {
     const rect = this.canvas.getBoundingClientRect();
-    const scaleX = this.canvas.width / rect.width;
-    const scaleY = this.canvas.height / rect.height;
+    if (!rect.width || !rect.height) return { x: 0, y: 0 };
+    const vw = this.engine ? this.engine.virtualWidth : 1280;
+    const vh = this.engine ? this.engine.virtualHeight : 720;
     return {
-      x: (clientX - rect.left) * scaleX,
-      y: (clientY - rect.top) * scaleY
+      x: ((clientX - rect.left) / rect.width) * vw,
+      y: ((clientY - rect.top) / rect.height) * vh
     };
   }
 
@@ -138,15 +139,16 @@ export class InputManager {
     });
   }
 
-  // Mobile Touch Button Geometry (Canvas coords 1280x720)
-  // Slightly bigger buttons, positioned slightly towards the middle of the bottom background
+  // Mobile Touch Button Geometry (Dynamic based on virtualWidth & virtualHeight)
   getButtonLayout() {
+    const vw = this.engine ? this.engine.virtualWidth : 1280;
+    const vh = this.engine ? this.engine.virtualHeight : 720;
     return {
-      left: { x: 75, y: 572, w: 96, h: 96 },
-      right: { x: 185, y: 572, w: 96, h: 96 },
-      sprint: { x: 1088, y: 498, w: 106, h: 58 },
-      interact: { x: 1090, y: 572, w: 102, h: 96 },
-      gulal: { x: 940, y: 614, w: 128, h: 54 }
+      left: { x: 75, y: vh - 148, w: 96, h: 96 },
+      right: { x: 185, y: vh - 148, w: 96, h: 96 },
+      sprint: { x: vw - 192, y: vh - 222, w: 106, h: 58 },
+      interact: { x: vw - 190, y: vh - 148, w: 102, h: 96 },
+      gulal: { x: vw - 340, y: vh - 106, w: 128, h: 54 }
     };
   }
 

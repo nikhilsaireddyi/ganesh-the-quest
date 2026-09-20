@@ -119,24 +119,28 @@ export class PhotoMode {
         if (input.keys) input.keys['KeyC'] = false;
       }
 
+      const vw = this.engine ? this.engine.virtualWidth : 1280;
+      const vh = this.engine ? this.engine.virtualHeight : 720;
+      const cx = vw / 2;
+
       const mouse = input.mouse;
       if (mouse && mouse.justPressed) {
-        // Shutter button (center bottom: 640, 615, radius: 42)
-        if (Math.hypot(mouse.x - 640, mouse.y - 615) <= 42) {
+        // Shutter button (center bottom: cx, vh - 75, radius: 42)
+        if (Math.hypot(mouse.x - cx, mouse.y - (vh - 75)) <= 42) {
           this.capture(this.game.canvas);
           mouse.justPressed = false;
           return;
         }
 
-        // Exit button (top right: 1140 to 1255, y: 15 to 62)
-        if (mouse.x >= 1140 && mouse.x <= 1255 && mouse.y >= 15 && mouse.y <= 62) {
+        // Exit button (top right: vw - 130 to vw - 25, y: 15 to 62)
+        if (mouse.x >= vw - 130 && mouse.x <= vw - 25 && mouse.y >= 15 && mouse.y <= 62) {
           this.exit();
           mouse.justPressed = false;
           return;
         }
 
-        // Scrapbook button (bottom right: 1070 to 1220, y: 595 to 640)
-        if (mouse.x >= 1060 && mouse.x <= 1230 && mouse.y >= 590 && mouse.y <= 645) {
+        // Scrapbook button (bottom right: vw - 190 to vw - 30, y: vh - 90 to vh - 40)
+        if (mouse.x >= vw - 190 && mouse.x <= vw - 30 && mouse.y >= vh - 90 && mouse.y <= vh - 40) {
           this.showScrapbook = true;
           this.active = false;
           audioManager.playSnap();
@@ -213,20 +217,25 @@ export class PhotoMode {
   renderViewfinder(ctx) {
     if (!this.active) return;
 
+    const vw = this.engine ? this.engine.virtualWidth : 1280;
+    const vh = this.engine ? this.engine.virtualHeight : 720;
+    const cx = vw / 2;
+    const cy = vh / 2;
+
     ctx.save();
     // Rule of Thirds Grid Lines
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
     ctx.lineWidth = 1;
     ctx.setLineDash([6, 8]);
     ctx.beginPath();
-    ctx.moveTo(426, 0);
-    ctx.lineTo(426, 720);
-    ctx.moveTo(853, 0);
-    ctx.lineTo(853, 720);
-    ctx.moveTo(0, 240);
-    ctx.lineTo(1280, 240);
-    ctx.moveTo(0, 480);
-    ctx.lineTo(1280, 480);
+    ctx.moveTo(vw / 3, 0);
+    ctx.lineTo(vw / 3, vh);
+    ctx.moveTo((2 * vw) / 3, 0);
+    ctx.lineTo((2 * vw) / 3, vh);
+    ctx.moveTo(0, vh / 3);
+    ctx.lineTo(vw, vh / 3);
+    ctx.moveTo(0, (2 * vh) / 3);
+    ctx.lineTo(vw, (2 * vh) / 3);
     ctx.stroke();
     ctx.setLineDash([]);
 
@@ -241,31 +250,31 @@ export class PhotoMode {
     ctx.lineTo(pad, pad);
     ctx.lineTo(pad + len, pad);
     // Top-Right
-    ctx.moveTo(1280 - pad - len, pad);
-    ctx.lineTo(1280 - pad, pad);
-    ctx.lineTo(1280 - pad, pad + len);
+    ctx.moveTo(vw - pad - len, pad);
+    ctx.lineTo(vw - pad, pad);
+    ctx.lineTo(vw - pad, pad + len);
     // Bottom-Left
-    ctx.moveTo(pad, 720 - pad - len);
-    ctx.lineTo(pad, 720 - pad);
-    ctx.lineTo(pad + len, 720 - pad);
+    ctx.moveTo(pad, vh - pad - len);
+    ctx.lineTo(pad, vh - pad);
+    ctx.lineTo(pad + len, vh - pad);
     // Bottom-Right
-    ctx.moveTo(1280 - pad - len, 720 - pad);
-    ctx.lineTo(1280 - pad, 720 - pad);
-    ctx.lineTo(1280 - pad, 720 - pad - len);
+    ctx.moveTo(vw - pad - len, vh - pad);
+    ctx.lineTo(vw - pad, vh - pad);
+    ctx.lineTo(vw - pad, vh - pad - len);
     ctx.stroke();
 
     // Center Golden Focus Reticle
     ctx.strokeStyle = '#ffd54f';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(640, 360, 24, 0, Math.PI * 2);
+    ctx.arc(cx, cy, 24, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.strokeRect(632, 352, 16, 16);
+    ctx.strokeRect(cx - 8, cy - 8, 16, 16);
 
     // Top Status Banner
     ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
     ctx.beginPath();
-    ctx.roundRect(460, 18, 360, 38, 10);
+    ctx.roundRect(cx - 180, 18, 360, 38, 10);
     ctx.fill();
     ctx.strokeStyle = '#ffd700';
     ctx.lineWidth = 1.5;
@@ -274,12 +283,12 @@ export class PhotoMode {
     ctx.fillStyle = '#ffd54f';
     ctx.font = 'bold 14px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('📸 PHOTO MODE • TAP SHUTTER OR [C]', 640, 42);
+    ctx.fillText('📸 PHOTO MODE • TAP SHUTTER OR [C]', cx, 42);
 
     // Exit Button Top Right
     ctx.fillStyle = '#dc2626';
     ctx.beginPath();
-    ctx.roundRect(1150, 18, 95, 40, 10);
+    ctx.roundRect(vw - 120, 18, 95, 40, 10);
     ctx.fill();
     ctx.strokeStyle = '#fca5a5';
     ctx.lineWidth = 2;
@@ -287,29 +296,29 @@ export class PhotoMode {
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 14px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('EXIT ✕', 1197, 43);
+    ctx.fillText('EXIT ✕', vw - 72, 43);
 
-    // Scrapbook Button Bottom Right (Elevated for safe bottom clearance)
+    // Scrapbook Button Bottom Right
     ctx.fillStyle = '#0f172a';
     ctx.beginPath();
-    ctx.roundRect(1070, 595, 150, 42, 10);
+    ctx.roundRect(vw - 180, vh - 85, 150, 42, 10);
     ctx.fill();
     ctx.strokeStyle = '#ffd700';
     ctx.lineWidth = 1.5;
     ctx.stroke();
     ctx.fillStyle = '#ffd54f';
     ctx.font = 'bold 13px sans-serif';
-    ctx.fillText(`📖 SCRAPBOOK (${this.photos.length})`, 1145, 621);
+    ctx.fillText(`📖 SCRAPBOOK (${this.photos.length})`, vw - 105, vh - 59);
 
-    // Shutter Button Bottom Center (Elevated for safe bottom clearance)
+    // Shutter Button Bottom Center
     ctx.fillStyle = 'rgba(15, 23, 42, 0.7)';
     ctx.beginPath();
-    ctx.arc(640, 615, 42, 0, Math.PI * 2);
+    ctx.arc(cx, vh - 75, 42, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(640, 615, 32, 0, Math.PI * 2);
+    ctx.arc(cx, vh - 75, 32, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = '#ffd700';
     ctx.lineWidth = 3.5;
@@ -317,7 +326,7 @@ export class PhotoMode {
 
     ctx.fillStyle = '#e65100';
     ctx.beginPath();
-    ctx.arc(640, 615, 24, 0, Math.PI * 2);
+    ctx.arc(cx, vh - 75, 24, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
@@ -325,9 +334,11 @@ export class PhotoMode {
 
   renderFlash(ctx) {
     if (this.flashAlpha > 0.01) {
+      const vw = this.engine ? this.engine.virtualWidth : 1280;
+      const vh = this.engine ? this.engine.virtualHeight : 720;
       ctx.save();
       ctx.fillStyle = `rgba(255, 255, 255, ${this.flashAlpha})`;
-      ctx.fillRect(0, 0, 1280, 720);
+      ctx.fillRect(0, 0, vw, vh);
       ctx.restore();
     }
   }
@@ -336,10 +347,6 @@ export class PhotoMode {
     if (!this.showScrapbook) return;
 
     ctx.save();
-    // Backdrop
-    ctx.fillStyle = 'rgba(5, 8, 18, 0.9)';
-    ctx.fillRect(0, 0, 1280, 720);
-
     const mx = 180;
     const my = 55;
     const mw = 920;

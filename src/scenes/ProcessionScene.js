@@ -183,13 +183,17 @@ export class ProcessionScene {
       return;
     }
 
+    const modalInput = this.game && typeof this.game.getModalInputProxy === 'function'
+      ? this.game.getModalInputProxy(input)
+      : input;
+
     if (this.rhythmGame.active) {
-      this.rhythmGame.update(dt, input, this.game.particles);
+      this.rhythmGame.update(dt, modalInput, this.game.particles);
       return;
     }
 
     if (this.lezimDance.active) {
-      this.lezimDance.update(dt, input);
+      this.lezimDance.update(dt, modalInput);
       return;
     }
 
@@ -200,10 +204,11 @@ export class ProcessionScene {
 
     // Day -> Sunset -> Twilight -> Night Progression based on distance
     const progress = Math.min(1.0, this.distanceTraveled / this.totalDistance);
+    const cx = this.game ? this.game.virtualWidth / 2 : 640;
 
     // Interactive Dhol-Tasha prompt trigger
     const isDholClicked = input.mouse && input.mouse.justPressed &&
-      input.mouse.x >= 430 && input.mouse.x <= 850 &&
+      input.mouse.x >= cx - 210 && input.mouse.x <= cx + 210 &&
       input.mouse.y >= 540 && input.mouse.y <= 620;
 
     if (!this.rhythmGamePlayed && progress > 0.25 && progress < 0.50 && (input.interactPressed || isDholClicked)) {
@@ -214,7 +219,7 @@ export class ProcessionScene {
 
     // Interactive Lezim Folk Dance prompt trigger
     const isLezimClicked = input.mouse && input.mouse.justPressed &&
-      input.mouse.x >= 430 && input.mouse.x <= 850 &&
+      input.mouse.x >= cx - 210 && input.mouse.x <= cx + 210 &&
       input.mouse.y >= 540 && input.mouse.y <= 620;
 
     if (!this.lezimPlayed && progress > 0.52 && progress < 0.78 && (input.interactPressed || (input.keys && input.keys['KeyL']) || isLezimClicked)) {
@@ -689,7 +694,7 @@ export class ProcessionScene {
 
   render(ctx) {
     // 1. Sky & Celestial
-    this.game.dayNight.renderSky(ctx, 1280, 720);
+    this.game.dayNight.renderSky(ctx, this.game.virtualWidth, this.game.virtualHeight);
 
     // 2. Parallax background
     this.game.parallax.renderBackground(ctx, this.game.camera);
@@ -797,10 +802,12 @@ export class ProcessionScene {
 
     // 7. HUD / Festival Progress Overlay
     ctx.save();
+    const cx = this.game ? this.game.virtualWidth / 2 : 640;
+
     // Top banner
     ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
     ctx.beginPath();
-    ctx.roundRect(460, 20, 360, 60, 12);
+    ctx.roundRect(cx - 180, 20, 360, 60, 12);
     ctx.fill();
     ctx.strokeStyle = '#ffd700';
     ctx.lineWidth = 2;
@@ -809,12 +816,12 @@ export class ProcessionScene {
     ctx.fillStyle = '#ffb300';
     ctx.font = 'bold 16px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('GRAND PROCESSION', 640, 44);
+    ctx.fillText('GRAND PROCESSION', cx, 44);
 
     const percent = Math.floor((this.distanceTraveled / this.totalDistance) * 100);
     ctx.fillStyle = '#ffffff';
     ctx.font = '13px sans-serif';
-    ctx.fillText(`Approaching Sacred Ghat: ${percent}%`, 640, 66);
+    ctx.fillText(`Approaching Sacred Ghat: ${percent}%`, cx, 66);
 
     // Dhol Rhythm prompt (Dynamically positioned with safe bottom clearance on all displays)
     if (!this.rhythmGamePlayed && !this.rhythmGame.active && percent > 25 && percent < 50) {
@@ -822,7 +829,7 @@ export class ProcessionScene {
       const py = 556 + pulse;
       ctx.fillStyle = '#ff6d00';
       ctx.beginPath();
-      ctx.roundRect(440, py, 400, 50, 25);
+      ctx.roundRect(cx - 200, py, 400, 50, 25);
       ctx.fill();
       ctx.strokeStyle = '#ffd700';
       ctx.lineWidth = 2.5;
@@ -831,7 +838,7 @@ export class ProcessionScene {
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 15px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('🥁 PLAY DHOL-TASHA BEATS [E]', 640, py + 31);
+      ctx.fillText('🥁 PLAY DHOL-TASHA BEATS [E]', cx, py + 31);
     }
 
     // Lezim Dance prompt (Dynamically positioned with safe bottom clearance on all displays)
@@ -840,7 +847,7 @@ export class ProcessionScene {
       const py = 556 + pulse;
       ctx.fillStyle = '#10b981';
       ctx.beginPath();
-      ctx.roundRect(440, py, 400, 50, 25);
+      ctx.roundRect(cx - 200, py, 400, 50, 25);
       ctx.fill();
       ctx.strokeStyle = '#fef08a';
       ctx.lineWidth = 2.5;
@@ -849,17 +856,24 @@ export class ProcessionScene {
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 15px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('🔔 DANCE LEZIM FOLK DANCE [E] / [L]', 640, py + 31);
+      ctx.fillText('🔔 DANCE LEZIM FOLK DANCE [E] / [L]', cx, py + 31);
     }
 
     ctx.restore();
 
-    // Render Dhol Rhythm Game
-    this.rhythmGame.render(ctx);
-
-    // Render Lezim Dance Game
-    this.lezimDance.render(ctx);
+    // Render Minigame Modals (Centered dynamically with full-screen dark backdrops)
+    this.renderMinigameModal(ctx, this.rhythmGame);
+    this.renderMinigameModal(ctx, this.lezimDance);
 
     this.game.ui.renderModals(ctx);
+  }
+
+  renderMinigameModal(ctx, minigame) {
+    if (!minigame || !minigame.active) return;
+    if (this.game && typeof this.game.renderCenteredModal === 'function') {
+      this.game.renderCenteredModal(ctx, () => minigame.render(ctx));
+    } else {
+      minigame.render(ctx);
+    }
   }
 }

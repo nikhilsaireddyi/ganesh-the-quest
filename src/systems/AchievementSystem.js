@@ -180,10 +180,6 @@ export class AchievementSystem {
     if (!this.showModal) return;
 
     ctx.save();
-    // Backdrop
-    ctx.fillStyle = 'rgba(5, 8, 18, 0.85)';
-    ctx.fillRect(0, 0, 1280, 720);
-
     // Modal Frame
     const mx = 290;
     const my = 80;

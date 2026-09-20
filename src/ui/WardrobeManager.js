@@ -144,10 +144,6 @@ export class WardrobeManager {
     if (!this.showModal) return;
 
     ctx.save();
-    // Dark transparent backdrop
-    ctx.fillStyle = 'rgba(6, 10, 22, 0.88)';
-    ctx.fillRect(0, 0, 1280, 720);
-
     const bx = 280;
     const by = 60;
     const bw = 720;

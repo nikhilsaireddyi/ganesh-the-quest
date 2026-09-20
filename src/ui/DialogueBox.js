@@ -7,7 +7,8 @@ import { audioManager } from '../audio/AudioManager.js';
 import { wardrobeManager } from './WardrobeManager.js';
 
 export class DialogueBox {
-  constructor() {
+  constructor(engine = null) {
+    this.engine = engine;
     this.active = false;
     this.speaker = '';
     this.lines = [];
@@ -18,6 +19,23 @@ export class DialogueBox {
     this.charTimer = 0;
     this.charSpeed = 0.025; // seconds per char
     this.onComplete = null;
+  }
+
+  getGeometry() {
+    const vw = this.engine ? this.engine.virtualWidth : 1280;
+    const vh = this.engine ? this.engine.virtualHeight : 720;
+    const bw = Math.min(1040, vw - 40);
+    const bx = Math.round((vw - bw) / 2);
+    const bh = 185;
+    const by = vh - bh - 35;
+    return {
+      bx,
+      by,
+      bw,
+      bh,
+      skipX: bx + bw - 55,
+      skipY: by + 12
+    };
   }
 
   start(speaker, lines, onComplete) {
@@ -39,6 +57,12 @@ export class DialogueBox {
   update(dt, input) {
     if (!this.active) return;
 
+    if (input && input.engine && !this.engine) {
+      this.engine = input.engine;
+    }
+
+    const geom = this.getGeometry();
+
     // Typewriter progression
     if (this.displayedText.length < this.targetText.length) {
       this.charTimer += dt;
@@ -54,7 +78,9 @@ export class DialogueBox {
     }
 
     // Close / Skip button [X]
-    if (input.mouse && input.mouse.justPressed && input.mouse.x >= 1100 && input.mouse.x <= 1150 && input.mouse.y >= 505 && input.mouse.y <= 555) {
+    if (input.mouse && input.mouse.justPressed &&
+        input.mouse.x >= geom.skipX - 10 && input.mouse.x <= geom.skipX + 50 &&
+        input.mouse.y >= geom.skipY - 5 && input.mouse.y <= geom.skipY + 45) {
       input.mouse.justPressed = false;
       input.interactPressed = false;
       this.active = false;
@@ -93,11 +119,8 @@ export class DialogueBox {
     if (!this.active) return;
 
     ctx.save();
-    // Dialogue panel at bottom of screen
-    const bx = 120;
-    const by = 500;
-    const bw = 1040;
-    const bh = 185;
+    const geom = this.getGeometry();
+    const { bx, by, bw, bh, skipX, skipY } = geom;
 
     // Glassmorphism background
     ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
@@ -111,7 +134,7 @@ export class DialogueBox {
     // Close / Skip Button [X]
     ctx.fillStyle = '#ef4444';
     ctx.beginPath();
-    ctx.roundRect(1105, 512, 40, 36, 8);
+    ctx.roundRect(skipX, skipY, 40, 36, 8);
     ctx.fill();
     ctx.strokeStyle = '#ffd54f';
     ctx.lineWidth = 1.5;
@@ -120,7 +143,7 @@ export class DialogueBox {
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 18px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('✕', 1125, 536);
+    ctx.fillText('✕', skipX + 20, skipY + 24);
 
     // Ornate Gold Corner Motifs
     ctx.strokeStyle = '#ffb300';

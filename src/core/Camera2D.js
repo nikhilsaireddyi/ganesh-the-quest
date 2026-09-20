@@ -106,6 +106,8 @@ export class Camera2D {
 
     if (this.maxX - this.minX >= halfW * 2) {
       this.x = Math.max(this.minX + halfW, Math.min(this.maxX - halfW, this.x));
+    } else {
+      this.x = (this.minX + this.maxX) / 2;
     }
   }
 

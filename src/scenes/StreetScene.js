@@ -200,6 +200,9 @@ export class StreetScene {
         this.game.missions.start('SYNCHRONIZED_LIFT');
       });
     });
+
+    this.decorationsCollector.game = this.game;
+    this.stormProtection.game = this.game;
   }
 
   enter() {
@@ -283,7 +286,7 @@ export class StreetScene {
 
     // Weather particles
     if (this.game.dayNight.isStorm) {
-      this.game.particles.emitRain(this.game.camera.x, 360, 1280, 720, 18);
+      this.game.particles.emitRain(this.game.camera.x, 360, this.game.virtualWidth, this.game.virtualHeight, 18);
       if (Math.random() < 0.008) {
         this.game.particles.emitLightning();
         audioManager.playThunder();
@@ -291,55 +294,59 @@ export class StreetScene {
       }
     } else {
       if (Math.random() < 0.1) {
-        this.game.particles.emitPetals(this.game.camera.x + (Math.random() - 0.5) * 1280, 100, 2);
+        this.game.particles.emitPetals(this.game.camera.x + (Math.random() - 0.5) * this.game.virtualWidth, 100, 2);
       }
     }
 
-    // Handle Active Mini-games
+    // Handle Active Mini-games with modal input proxy
+    const modalInput = this.game && typeof this.game.getModalInputProxy === 'function'
+      ? this.game.getModalInputProxy(input)
+      : input;
+
     if (this.bambooMinigame.active) {
-      this.bambooMinigame.update(dt, input, this.game.particles);
+      this.bambooMinigame.update(dt, modalInput, this.game.particles);
       if (!this.bambooMinigame.active && !this.game.dialogue.active) {
         this.player.canMove = true;
       }
       return;
     }
     if (this.flowerMinigame.active) {
-      this.flowerMinigame.update(dt, input, this.game.particles);
+      this.flowerMinigame.update(dt, modalInput, this.game.particles);
       if (!this.flowerMinigame.active && !this.game.dialogue.active) {
         this.player.canMove = true;
       }
       return;
     }
     if (this.wiringMinigame.active) {
-      this.wiringMinigame.update(dt, input, this.game.particles);
+      this.wiringMinigame.update(dt, modalInput, this.game.particles);
       if (!this.wiringMinigame.active && !this.game.dialogue.active) {
         this.player.canMove = true;
       }
       return;
     }
     if (this.generatorMinigame.active) {
-      this.generatorMinigame.update(dt, input, this.game.particles);
+      this.generatorMinigame.update(dt, modalInput, this.game.particles);
       if (!this.generatorMinigame.active && !this.game.dialogue.active) {
         this.player.canMove = true;
       }
       return;
     }
     if (this.liftMinigame.active) {
-      this.liftMinigame.update(dt, input, this.game.particles, this.game.camera);
+      this.liftMinigame.update(dt, modalInput, this.game.particles, this.game.camera);
       if (!this.liftMinigame.active && !this.game.dialogue.active) {
         this.player.canMove = true;
       }
       return;
     }
     if (this.modakMinigame.active) {
-      this.modakMinigame.update(dt, input, this.game.particles);
+      this.modakMinigame.update(dt, modalInput, this.game.particles);
       if (!this.modakMinigame.active && !this.game.dialogue.active) {
         this.player.canMove = true;
       }
       return;
     }
     if (this.aartiRitual.active) {
-      this.aartiRitual.update(dt, input, this.game.particles);
+      this.aartiRitual.update(dt, modalInput, this.game.particles);
       if (!this.aartiRitual.active && !this.game.dialogue.active) {
         this.player.canMove = true;
       }
@@ -626,7 +633,7 @@ export class StreetScene {
 
   render(ctx) {
     // 1. Sky & Celestial
-    this.game.dayNight.renderSky(ctx, 1280, 720);
+    this.game.dayNight.renderSky(ctx, this.game.virtualWidth, this.game.virtualHeight);
 
     // 2. Parallax background
     this.game.parallax.renderBackground(ctx, this.game.camera);
@@ -668,18 +675,18 @@ export class StreetScene {
 
     // Ornate Streetlamps along walkway (only lit during night, twilight, or storm)
     const isNight = this.game.dayNight.isNight();
-    const streetLampX = [220, 750, 1200, 1620, 2350];
+    const streetLampX = [350, 800, 1250, 1600, 1950, 2300];
     streetLampX.forEach(lx => {
       this.game.assetRegistry.draw(ctx, 'STREET_LAMP', lx, 540, 32, 180, isNight ? 'lit' : 'unlit', 1, this.game.dayNight.time);
     });
 
-    // NPCs
+    // Street NPCs
     this.npcs.forEach(npc => npc.render(ctx));
 
     // Player
     this.player.render(ctx);
 
-    // World particles (sparks, petals)
+    // Dynamic Atmospheric Particles (In World space)
     this.game.particles.render(ctx);
 
     // Visible decoration items in world during Mission 3
@@ -693,12 +700,12 @@ export class StreetScene {
 
     this.game.camera.end(ctx);
 
-    // 4. Foreground Parallax Bunting & Torans
+    // 4. Foreground Parallax (Festoon torans hanging from roofs across street)
     this.game.parallax.renderForeground(ctx, this.game.camera);
 
-    // 5. Lighting Pass (Ambient darkness & warm lights - only during dark hours/night)
-    this.game.lighting.clear();
+    // 5. Lighting / Darkness Pass (Night Lamp Glows)
     const ambientDark = this.game.dayNight.getAmbientDarkness();
+    this.game.lighting.clear();
     if (isNight || ambientDark > 0.15) {
       streetLampX.forEach(lx => {
         this.game.lighting.addLight(lx, 360, 95, 'rgba(255, 215, 64, 0.25)', 0.6);
@@ -721,14 +728,14 @@ export class StreetScene {
     this.decorationsCollector.renderHUD(ctx);
     this.stormProtection.renderHUD(ctx);
 
-    // Mini-game Full Modals
-    this.bambooMinigame.render(ctx);
-    this.flowerMinigame.render(ctx);
-    this.wiringMinigame.render(ctx);
-    this.generatorMinigame.render(ctx);
-    this.liftMinigame.render(ctx);
-    this.modakMinigame.render(ctx);
-    this.aartiRitual.render(ctx);
+    // Mini-game Full Modals (Centered dynamically with full-screen dark backdrops)
+    this.renderMinigameModal(ctx, this.bambooMinigame);
+    this.renderMinigameModal(ctx, this.flowerMinigame);
+    this.renderMinigameModal(ctx, this.wiringMinigame);
+    this.renderMinigameModal(ctx, this.generatorMinigame);
+    this.renderMinigameModal(ctx, this.liftMinigame);
+    this.renderMinigameModal(ctx, this.modakMinigame);
+    this.renderMinigameModal(ctx, this.aartiRitual);
 
     // Dialogue Box
     this.game.dialogue.render(ctx);
@@ -739,6 +746,15 @@ export class StreetScene {
     // Mandapam Collapse Dramatic Failure Overlay
     if (this.mandapamCollapseCinematic.active) {
       this.renderMandapamCollapseOverlay(ctx);
+    }
+  }
+
+  renderMinigameModal(ctx, minigame) {
+    if (!minigame || !minigame.active) return;
+    if (this.game && typeof this.game.renderCenteredModal === 'function') {
+      this.game.renderCenteredModal(ctx, () => minigame.render(ctx));
+    } else {
+      minigame.render(ctx);
     }
   }
 
@@ -785,12 +801,12 @@ export class StreetScene {
       ctx.save();
       const isRight = targetX > this.player.x;
       const text = isRight ? `Walk Right to ${targetName} ▶` : `◀ Walk Left to ${targetName}`;
-
       ctx.font = 'bold 12px sans-serif';
       const textWidth = ctx.measureText(text).width;
       const chipW = Math.max(220, textWidth + 36);
       const chipH = 30;
-      const chipX = 640 - chipW / 2;
+      const cx = this.game.virtualWidth / 2;
+      const chipX = cx - chipW / 2;
       const chipY = 76;
 
       ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
@@ -804,7 +820,7 @@ export class StreetScene {
       ctx.fillStyle = '#ffd54f';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(text, 640, chipY + chipH / 2);
+      ctx.fillText(text, cx, chipY + chipH / 2);
       ctx.restore();
     }
   }
@@ -816,87 +832,92 @@ export class StreetScene {
     let targetX = null;
     let label = '';
 
-    if (currentMission === 'BUILD_MANDAPAM' && this.mandapam.state === 'empty') {
+    if (currentMission === 'BUILD_MANDAPAM') {
       targetX = 1400;
-      label = '★ ASSEMBLE BAMBOO [E]';
+      label = 'Build Mandapam Frame';
     } else if (currentMission === 'FLOWER_PUZZLE') {
       targetX = 650;
-      label = '★ MAKE GARLAND [E]';
+      label = 'Garland Flower Vendor';
     } else if (currentMission === 'ELECTRICAL_WIRING') {
       targetX = 2160;
-      label = '⚡ CONNECT WIRING [E]';
+      label = 'Electrician Subhas';
     } else if (currentMission === 'GENERATOR_REPAIR') {
       targetX = 2100;
-      label = '⚠️ REPAIR GENERATOR [E]';
+      label = 'Diesel Generator';
     } else if (currentMission === 'SYNCHRONIZED_LIFT') {
       targetX = 1400;
-      label = '🙏 LIFT GANESHA [E]';
+      label = 'Lift Ganesha Palanquin';
     }
 
     if (targetX !== null) {
+      const screenPos = this.game.camera.worldToScreen(targetX, 500);
+      const pulse = Math.sin(this.animTime * 4) * 4;
+
       ctx.save();
-      const animTime = Date.now() * 0.005;
-      const bob = Math.sin(animTime * 5) * 8;
-      const py = 410 + bob;
-
-      // Golden halo & star badge
-      ctx.fillStyle = '#ff8f00';
+      ctx.fillStyle = '#ffd700';
       ctx.beginPath();
-      ctx.arc(targetX, py, 15, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = '#ffd700';
-      ctx.lineWidth = 3;
-      ctx.stroke();
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 16px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('★', targetX, py);
-
-      // Downward pointer arrow
-      ctx.fillStyle = '#ff8f00';
-      ctx.beginPath();
-      ctx.moveTo(targetX - 8, py + 13);
-      ctx.lineTo(targetX + 8, py + 13);
-      ctx.lineTo(targetX, py + 24);
+      ctx.moveTo(screenPos.x, screenPos.y - 20 + pulse);
+      ctx.lineTo(screenPos.x - 12, screenPos.y - 36 + pulse);
+      ctx.lineTo(screenPos.x + 12, screenPos.y - 36 + pulse);
       ctx.closePath();
       ctx.fill();
 
-      // Quest Banner text box
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
+      // Mission Target Name Tag
+      ctx.fillStyle = 'rgba(10, 14, 26, 0.85)';
+      ctx.font = 'bold 11px sans-serif';
+      const tw = ctx.measureText(label).width;
       ctx.beginPath();
-      ctx.roundRect(targetX - 80, py - 36, 160, 24, 6);
+      ctx.roundRect(screenPos.x - (tw + 16) / 2, screenPos.y - 62 + pulse, tw + 16, 20, 4);
       ctx.fill();
-      ctx.strokeStyle = '#ffd700';
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = '#ffb300';
+      ctx.lineWidth = 1;
       ctx.stroke();
 
       ctx.fillStyle = '#ffd54f';
-      ctx.font = 'bold 11px sans-serif';
-      ctx.fillText(label, targetX, py - 24);
-
+      ctx.textAlign = 'center';
+      ctx.fillText(label, screenPos.x, screenPos.y - 48 + pulse);
       ctx.restore();
     }
+  }
+
+  // --- MANDAPAM COLLAPSE FAILURE CINEMATIC ---
+
+  startMandapamCollapseCinematic() {
+    this.mandapamCollapseCinematic.active = true;
+    this.mandapamCollapseCinematic.timer = 0;
+    this.player.canMove = false;
+
+    // Trigger dramatic collapse audio
+    audioManager.playStormAmbience();
+    audioManager.playThunder();
+
+    // Trigger massive dust and debris explosion from the mandapam
+    this.game.particles.emitCollapseDust(1400, 520, 70);
+    this.game.particles.emitDebris(1400, 500, 45);
+    this.game.camera.shake(25, 2.5);
   }
 
   renderMandapamCollapseOverlay(ctx) {
     const t = this.mandapamCollapseCinematic.timer;
     const alpha = Math.min(1, t * 1.5);
+    const vw = this.game.virtualWidth;
+    const vh = this.game.virtualHeight;
+    const cx = vw / 2;
+    const cy = vh / 2;
 
     ctx.save();
     // Dramatic red storm vignette
-    const vigGrad = ctx.createRadialGradient(640, 360, 200, 640, 360, 640);
+    const vigGrad = ctx.createRadialGradient(cx, cy, 200, cx, cy, Math.max(cx, cy));
     vigGrad.addColorStop(0, 'rgba(183, 28, 28, 0)');
     vigGrad.addColorStop(1, `rgba(183, 28, 28, ${Math.min(0.7, t * 0.35)})`);
     ctx.fillStyle = vigGrad;
-    ctx.fillRect(0, 0, 1280, 720);
+    ctx.fillRect(0, 0, vw, vh);
 
     ctx.globalAlpha = alpha;
     // Dark Red Card
     ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
     ctx.beginPath();
-    ctx.roundRect(330, 240, 620, 190, 16);
+    ctx.roundRect(cx - 310, cy - 120, 620, 190, 16);
     ctx.fill();
     ctx.strokeStyle = '#ff1744';
     ctx.lineWidth = 3;
@@ -905,26 +926,26 @@ export class StreetScene {
     // Red alert banner header
     ctx.fillStyle = '#b71c1c';
     ctx.beginPath();
-    ctx.roundRect(330, 240, 620, 52, [16, 16, 0, 0]);
+    ctx.roundRect(cx - 310, cy - 120, 620, 52, [16, 16, 0, 0]);
     ctx.fill();
 
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 22px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('⚡ MANDAPAM HAS COLLAPSED! ⚡', 640, 275);
+    ctx.fillText('⚡ MANDAPAM HAS COLLAPSED! ⚡', cx, cy - 85);
 
     ctx.fillStyle = '#ffd54f';
     ctx.font = '16px sans-serif';
-    ctx.fillText('The fierce squall broke the bamboo supports and tore the canopy!', 640, 330);
+    ctx.fillText('The fierce squall broke the bamboo supports and tore the canopy!', cx, cy - 30);
 
     ctx.fillStyle = '#cfd8dc';
     ctx.font = '14px sans-serif';
-    ctx.fillText('The festival cannot continue without Lord Ganesha\'s pandal.', 640, 360);
+    ctx.fillText('The festival cannot continue without Lord Ganesha\'s pandal.', cx, cy);
 
     const countdown = Math.max(1, Math.ceil(4.0 - t));
     ctx.fillStyle = '#ff8a80';
     ctx.font = 'bold 16px monospace';
-    ctx.fillText(`Restarting quest in ${countdown}...`, 640, 400);
+    ctx.fillText(`Restarting quest in ${countdown}...`, cx, cy + 40);
 
     ctx.restore();
 
@@ -932,7 +953,7 @@ export class StreetScene {
     if (t > 3.2) {
       const fade = (t - 3.2) / 0.8;
       ctx.fillStyle = `rgba(0, 0, 0, ${Math.min(1, fade)})`;
-      ctx.fillRect(0, 0, 1280, 720);
+      ctx.fillRect(0, 0, vw, vh);
     }
   }
 }

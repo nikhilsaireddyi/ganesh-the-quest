@@ -46,8 +46,11 @@ export class CinematicIntroScene {
   }
 
   render(ctx) {
+    const vw = this.game.virtualWidth;
+    const vh = this.game.virtualHeight;
+
     // 1. Sky
-    this.game.dayNight.renderSky(ctx, 1280, 720);
+    this.game.dayNight.renderSky(ctx, vw, vh);
 
     // 2. Parallax background
     this.game.parallax.renderBackground(ctx, this.game.camera);
@@ -84,8 +87,8 @@ export class CinematicIntroScene {
     ctx.save();
     // Top & Bottom Cinematic Black Bars
     ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, 1280, 70);
-    ctx.fillRect(0, 650, 1280, 70);
+    ctx.fillRect(0, 0, vw, 70);
+    ctx.fillRect(0, vh - 70, vw, 70);
 
     // Narrative Text
     if (this.timer > 2.0) {
@@ -93,14 +96,14 @@ export class CinematicIntroScene {
       ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`;
       ctx.font = 'italic 22px serif';
       ctx.textAlign = 'center';
-      ctx.fillText('"Every celebration begins with a little work."', 640, 685);
+      ctx.fillText('"Every celebration begins with a little work."', vw / 2, vh - 25);
     }
 
     // Skip prompt top right
     ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
     ctx.font = '13px sans-serif';
     ctx.textAlign = 'right';
-    ctx.fillText('Press [E] or Click to Skip ▶', 1250, 42);
+    ctx.fillText('Press [E] or Click to Skip ▶', vw - 30, 42);
 
     ctx.restore();
   }

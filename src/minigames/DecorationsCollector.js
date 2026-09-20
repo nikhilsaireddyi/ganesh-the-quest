@@ -113,7 +113,8 @@ export class DecorationsCollector {
 
     ctx.save();
     // Checklist Card placed neatly on the right side below the top HUD buttons
-    const bx = 970;
+    const vw = this.game ? this.game.virtualWidth : 1280;
+    const bx = vw - 310;
     const by = 70;
     const bw = 285;
     const bh = 175;

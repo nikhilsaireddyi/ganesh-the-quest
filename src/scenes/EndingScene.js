@@ -26,19 +26,20 @@ export class EndingScene {
     this.game.particles.update(dt);
 
     if (Math.random() < 0.2) {
-      this.game.particles.emitPetals(Math.random() * 1280, 20, 2);
+      this.game.particles.emitPetals(Math.random() * this.game.virtualWidth, 20, 2);
     }
 
     const mouse = input.mouse;
+    const cx = this.game.virtualWidth / 2;
     if (mouse.justPressed) {
-      // PLAY AGAIN BUTTON (x: 420 to 620, y: 490 to 545)
-      if (mouse.x >= 420 && mouse.x <= 620 && mouse.y >= 490 && mouse.y <= 545) {
+      // PLAY AGAIN BUTTON (cx - 220 to cx - 20, y: 490 to 545)
+      if (mouse.x >= cx - 220 && mouse.x <= cx - 20 && mouse.y >= 490 && mouse.y <= 545) {
         audioManager.playSuccess();
         SaveSystem.reset();
         window.location.reload();
       }
-      // CREDITS BUTTON (x: 660 to 860, y: 490 to 545)
-      else if (mouse.x >= 660 && mouse.x <= 860 && mouse.y >= 490 && mouse.y <= 545) {
+      // CREDITS BUTTON (cx + 20 to cx + 220, y: 490 to 545)
+      else if (mouse.x >= cx + 20 && mouse.x <= cx + 220 && mouse.y >= 490 && mouse.y <= 545) {
         audioManager.playSnap();
         this.game.ui.showCredits = true;
       }
@@ -46,26 +47,30 @@ export class EndingScene {
   }
 
   render(ctx) {
+    const vw = this.game.virtualWidth;
+    const vh = this.game.virtualHeight;
+    const cx = vw / 2;
+
     // 1. Serene Twilight Night Sky
-    this.game.dayNight.renderSky(ctx, 1280, 720);
+    this.game.dayNight.renderSky(ctx, vw, vh);
 
     // 2. Divine Aura Background
     ctx.save();
     const glow = Math.sin(this.animTime * 2) * 15 + 60;
-    const grad = ctx.createRadialGradient(640, 220, 20, 640, 220, glow * 2.5);
+    const grad = ctx.createRadialGradient(cx, 220, 20, cx, 220, glow * 2.5);
     grad.addColorStop(0, 'rgba(255, 215, 0, 0.45)');
     grad.addColorStop(0.7, 'rgba(255, 143, 0, 0.15)');
     grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
     ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.arc(640, 220, glow * 2.5, 0, Math.PI * 2);
+    ctx.arc(cx, 220, glow * 2.5, 0, Math.PI * 2);
     ctx.fill();
 
     // 3. Golden Silhouette Ganesha
     this.game.assetRegistry.draw(
       ctx,
       'GANESHA_SPRITE',
-      640,
+      cx,
       310,
       130,
       170,
@@ -82,32 +87,32 @@ export class EndingScene {
     // 5. Ending Card & Typography
     ctx.save();
     ctx.fillStyle = 'rgba(10, 14, 26, 0.65)';
-    ctx.fillRect(0, 0, 1280, 720);
+    ctx.fillRect(0, 0, vw, vh);
 
     ctx.strokeStyle = '#ffd700';
     ctx.lineWidth = 3;
-    ctx.strokeRect(40, 40, 1200, 640);
+    ctx.strokeRect(40, 40, vw - 80, vh - 80);
 
     ctx.fillStyle = '#ffffff';
     ctx.shadowColor = '#ffd700';
     ctx.shadowBlur = 18;
     ctx.font = 'bold 48px serif';
     ctx.textAlign = 'center';
-    ctx.fillText('GANESH: THE QUEST', 640, 130);
+    ctx.fillText('GANESH: THE QUEST', cx, 130);
 
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#ffd54f';
     ctx.font = 'bold 28px sans-serif';
-    ctx.fillText('Ganpati Bappa Morya! 🙏', 640, 185);
+    ctx.fillText('Ganpati Bappa Morya! 🙏', cx, 185);
 
     ctx.fillStyle = '#cfd8dc';
     ctx.font = 'italic 18px sans-serif';
-    ctx.fillText('May wisdom, prosperity, and joy accompany all your journeys.', 640, 225);
+    ctx.fillText('May wisdom, prosperity, and joy accompany all your journeys.', cx, 225);
 
     // Completion Badge
     ctx.fillStyle = 'rgba(255, 179, 0, 0.15)';
     ctx.beginPath();
-    ctx.roundRect(460, 360, 360, 70, 12);
+    ctx.roundRect(cx - 180, 360, 360, 70, 12);
     ctx.fill();
     ctx.strokeStyle = '#ffd54f';
     ctx.lineWidth = 2;
@@ -115,35 +120,35 @@ export class EndingScene {
 
     ctx.fillStyle = '#00e676';
     ctx.font = 'bold 16px sans-serif';
-    ctx.fillText('✓ QUEST COMPLETED WITH DEVOTION', 640, 392);
+    ctx.fillText('✓ QUEST COMPLETED WITH DEVOTION', cx, 392);
     ctx.fillStyle = '#cfd8dc';
     ctx.font = '13px sans-serif';
-    ctx.fillText('All 10 Festival Milestones Achieved', 640, 415);
+    ctx.fillText('All 10 Festival Milestones Achieved', cx, 415);
 
     // Buttons: PLAY AGAIN & CREDITS
     // Button 1: PLAY AGAIN
     ctx.fillStyle = '#e65100';
     ctx.beginPath();
-    ctx.roundRect(420, 490, 200, 55, 10);
+    ctx.roundRect(cx - 220, 490, 200, 55, 10);
     ctx.fill();
     ctx.strokeStyle = '#ffd54f';
     ctx.lineWidth = 2;
     ctx.stroke();
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 16px sans-serif';
-    ctx.fillText('PLAY AGAIN', 520, 524);
+    ctx.fillText('PLAY AGAIN', cx - 120, 524);
 
     // Button 2: CREDITS
     ctx.fillStyle = '#263238';
     ctx.beginPath();
-    ctx.roundRect(660, 490, 200, 55, 10);
+    ctx.roundRect(cx + 20, 490, 200, 55, 10);
     ctx.fill();
     ctx.strokeStyle = '#78909c';
     ctx.lineWidth = 2;
     ctx.stroke();
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 16px sans-serif';
-    ctx.fillText('CREDITS', 760, 524);
+    ctx.fillText('CREDITS', cx + 120, 524);
 
     ctx.restore();
 

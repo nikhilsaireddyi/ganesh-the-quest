@@ -35,6 +35,7 @@ export class Engine {
     // Virtual design resolution
     this.virtualWidth = 1280;
     this.virtualHeight = 720;
+    this.dprScale = 1;
 
     // Subsystems
     this.assetRegistry = assetRegistry;
@@ -46,7 +47,7 @@ export class Engine {
     this.dayNight = new DayNightSystem();
     this.lighting = new LightingSystem();
     this.missions = new MissionManager();
-    this.dialogue = new DialogueBox();
+    this.dialogue = new DialogueBox(this);
     this.wardrobe = wardrobeManager;
     this.achievements = achievementSystem;
     this.photoMode = new PhotoMode(this);
@@ -74,12 +75,80 @@ export class Engine {
 
   setupResize() {
     const resize = () => {
-      // Internal buffer size stays 1280x720 for crisp pixel-perfect scaling
-      this.canvas.width = this.virtualWidth;
-      this.canvas.height = this.virtualHeight;
+      // Dynamic Full-Screen Responsive Scaling
+      // Fills 100% of the display window with no black bars and no distortion
+      const rect = this.canvas.getBoundingClientRect();
+      const cssWidth = rect.width > 0 ? rect.width : window.innerWidth;
+      const cssHeight = rect.height > 0 ? rect.height : window.innerHeight;
+
+      const aspect = cssWidth / cssHeight;
+
+      // Maintain minimum 1280x720 virtual coordinate space while expanding dynamically
+      if (aspect >= 16 / 9) {
+        this.virtualHeight = 720;
+        this.virtualWidth = Math.round(720 * aspect);
+      } else {
+        this.virtualWidth = 1280;
+        this.virtualHeight = Math.round(1280 / aspect);
+      }
+
+      // Update camera viewport to match dynamic screen dimensions
+      if (this.camera) {
+        this.camera.viewportWidth = this.virtualWidth;
+        this.camera.viewportHeight = this.virtualHeight;
+      }
+
+      const rawDpr = window.devicePixelRatio || 1;
+      const dpr = Math.min(Math.max(1, rawDpr), 2.5);
+
+      const targetWidth = Math.round(cssWidth * dpr);
+      const targetHeight = Math.round(cssHeight * dpr);
+
+      if (this.canvas.width !== targetWidth || this.canvas.height !== targetHeight) {
+        this.canvas.width = targetWidth;
+        this.canvas.height = targetHeight;
+        this.dprScale = targetWidth / this.virtualWidth;
+      }
     };
+
     window.addEventListener('resize', resize);
+    window.addEventListener('orientationchange', resize);
     resize();
+    requestAnimationFrame(resize);
+  }
+
+  getModalOffsets() {
+    return {
+      x: (this.virtualWidth - 1280) / 2,
+      y: (this.virtualHeight - 720) / 2
+    };
+  }
+
+  getModalInputProxy(input) {
+    const { x: ox, y: oy } = this.getModalOffsets();
+    if (ox === 0 && oy === 0) return input;
+
+    return {
+      ...input,
+      mouse: {
+        ...input.mouse,
+        x: input.mouse.x - ox,
+        y: input.mouse.y - oy
+      }
+    };
+  }
+
+  renderCenteredModal(ctx, renderFn) {
+    const { x: ox, y: oy } = this.getModalOffsets();
+    ctx.save();
+    // 1. Dark overlay covering the full screen edge-to-edge
+    ctx.fillStyle = 'rgba(10, 14, 26, 0.88)';
+    ctx.fillRect(0, 0, this.virtualWidth, this.virtualHeight);
+
+    // 2. Translate context to center the 1280x720 modal frame
+    ctx.translate(ox, oy);
+    renderFn();
+    ctx.restore();
   }
 
   start() {
@@ -104,14 +173,28 @@ export class Engine {
 
   update(dt) {
     // 0. Photo Mode updates
-    this.photoMode.update(dt, this.input);
+    const modalInput = this.getModalInputProxy(this.input);
+    if (this.photoMode.showScrapbook) {
+      this.photoMode.update(dt, modalInput);
+    } else {
+      this.photoMode.update(dt, this.input);
+    }
     if (this.photoMode.active || this.photoMode.showScrapbook) {
       return; // Freeze scene while framing or browsing scrapbook
     }
 
     // 1. Wardrobe & Achievements modals
-    this.wardrobe.update(dt, this.input);
-    this.achievements.update(dt, this.input);
+    if (this.wardrobe.showModal) {
+      this.wardrobe.update(dt, modalInput);
+    } else {
+      this.wardrobe.update(dt, this.input);
+    }
+
+    if (this.achievements.showModal) {
+      this.achievements.update(dt, modalInput);
+    } else {
+      this.achievements.update(dt, this.input);
+    }
 
     // 2. Camera
     this.camera.isMobile = this.input.isMobile;
@@ -155,7 +238,12 @@ export class Engine {
   }
 
   render() {
-    this.ctx.clearRect(0, 0, this.virtualWidth, this.virtualHeight);
+    // Clear full physical canvas buffer
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    this.ctx.save();
+    const scale = this.dprScale || 1;
+    this.ctx.scale(scale, scale);
 
     // 1. Render Active Scene
     this.sceneManager.render(this.ctx);
@@ -173,8 +261,16 @@ export class Engine {
     this.achievements.renderToasts(this.ctx);
 
     // 5. Modals (Wardrobe, Badges, Scrapbook)
-    this.wardrobe.renderModal(this.ctx);
-    this.achievements.renderModal(this.ctx);
-    this.photoMode.renderScrapbook(this.ctx);
+    if (this.wardrobe.showModal) {
+      this.renderCenteredModal(this.ctx, () => this.wardrobe.renderModal(this.ctx));
+    }
+    if (this.achievements.showModal) {
+      this.renderCenteredModal(this.ctx, () => this.achievements.renderModal(this.ctx));
+    }
+    if (this.photoMode.showScrapbook) {
+      this.renderCenteredModal(this.ctx, () => this.photoMode.renderScrapbook(this.ctx));
+    }
+
+    this.ctx.restore();
   }
 }

@@ -115,10 +115,13 @@ export class StormProtection {
     if (this.completed) return;
 
     ctx.save();
+    const vw = this.game ? this.game.virtualWidth : 1280;
+    const cx = vw / 2;
+
     // Storm Warning Timer HUD at Top Center
     ctx.fillStyle = this.failed ? 'rgba(213, 0, 0, 0.95)' : 'rgba(183, 28, 28, 0.9)';
     ctx.beginPath();
-    ctx.roundRect(470, 20, 340, 70, 12);
+    ctx.roundRect(cx - 170, 20, 340, 70, 12);
     ctx.fill();
     ctx.strokeStyle = this.failed ? '#ff1744' : '#ffea00';
     ctx.lineWidth = 2.5;
@@ -127,17 +130,17 @@ export class StormProtection {
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 15px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(this.failed ? '⚡ MANDAPAM COLLAPSED!' : '⚠️ PROTECT THE MANDAPAM!', 640, 44);
+    ctx.fillText(this.failed ? '⚡ MANDAPAM COLLAPSED!' : '⚠️ PROTECT THE MANDAPAM!', cx, 44);
 
     if (this.failed) {
       ctx.font = 'bold 20px monospace';
       ctx.fillStyle = '#ff8a80';
-      ctx.fillText('TIME EXPIRED: 00:00', 640, 72);
+      ctx.fillText('TIME EXPIRED: 00:00', cx, 72);
     } else {
       const secs = Math.ceil(this.timer);
       ctx.font = 'bold 22px monospace';
       ctx.fillStyle = secs <= 5 ? '#ff1744' : '#ffd54f';
-      ctx.fillText(`00:${secs < 10 ? '0' : ''}${secs}`, 640, 72);
+      ctx.fillText(`00:${secs < 10 ? '0' : ''}${secs}`, cx, 72);
     }
 
     ctx.restore();

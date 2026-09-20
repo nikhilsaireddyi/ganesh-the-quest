@@ -60,6 +60,12 @@ export class UIManager {
 
     const mouse = input.mouse;
 
+    const vw = this.game ? this.game.virtualWidth : 1280;
+    const vh = this.game ? this.game.virtualHeight : 720;
+    const pauseX = vw - 120;
+    const soundX = vw - 245;
+    const fsX = vw - 365;
+
     // 1. Check HUD Button Clicks during normal gameplay
     const isPhotoActive = this.game.photoMode && (this.game.photoMode.active || this.game.photoMode.showScrapbook);
     const isWardrobeActive = this.game.wardrobe && this.game.wardrobe.showModal;
@@ -67,20 +73,20 @@ export class UIManager {
 
     if (!this.isPaused && !this.showSettings && !this.showCredits && !isPhotoActive && !isWardrobeActive && !isBadgesActive) {
       if (mouse.justPressed) {
-        // Click Fullscreen Button [ ⛶ FULL ] (x: 915 to 1025, y: 20 to 58)
-        if (mouse.x >= 915 && mouse.x <= 1025 && mouse.y >= 20 && mouse.y <= 58) {
+        // Click Fullscreen Button [ ⛶ FULL ]
+        if (mouse.x >= fsX && mouse.x <= fsX + 110 && mouse.y >= 18 && mouse.y <= 64) {
           this.toggleFullscreen();
           audioManager.playSnap();
           return;
         }
-        // Click Sound / Settings Button [ 🔊 SOUND ] (x: 1040 to 1165, y: 20 to 58)
-        if (mouse.x >= 1040 && mouse.x <= 1165 && mouse.y >= 20 && mouse.y <= 58) {
+        // Click Sound / Settings Button [ 🔊 SOUND ]
+        if (mouse.x >= soundX && mouse.x <= soundX + 115 && mouse.y >= 18 && mouse.y <= 64) {
           this.showSettings = true;
           audioManager.playSnap();
           return;
         }
-        // Click Pause Button [ || PAUSE ] (x: 1175 to 1255, y: 20 to 58)
-        if (mouse.x >= 1175 && mouse.x <= 1255 && mouse.y >= 20 && mouse.y <= 58) {
+        // Click Pause Button [ || PAUSE ]
+        if (mouse.x >= pauseX && mouse.x <= pauseX + 95 && mouse.y >= 18 && mouse.y <= 64) {
           this.togglePause();
           return;
         }
@@ -120,8 +126,8 @@ export class UIManager {
         const layout = this.game && this.game.input && typeof this.game.input.getButtonLayout === 'function'
           ? this.game.input.getButtonLayout()
           : null;
-        const gx = isMobile && layout ? layout.gulal.x : (isMobile ? 940 : 1130);
-        const gy = isMobile && layout ? layout.gulal.y : (isMobile ? 614 : 640);
+        const gx = isMobile && layout ? layout.gulal.x : (isMobile ? vw - 340 : vw - 150);
+        const gy = isMobile && layout ? layout.gulal.y : (isMobile ? vh - 106 : vh - 80);
         const gw = isMobile && layout ? layout.gulal.w : (isMobile ? 128 : 120);
         const gh = isMobile && layout ? layout.gulal.h : (isMobile ? 54 : 48);
 
@@ -146,16 +152,21 @@ export class UIManager {
     }
 
     // 2. Active Modals Interaction
+    const modalInput = this.game && typeof this.game.getModalInputProxy === 'function'
+      ? this.game.getModalInputProxy(input)
+      : input;
+    const modalMouse = modalInput.mouse;
+
     if (this.showSettings) {
-      this.handleSettingsInteraction(mouse);
+      this.handleSettingsInteraction(modalMouse);
     } else if (this.showCredits) {
-      if (mouse.justPressed) {
+      if (modalMouse.justPressed) {
         this.showCredits = false;
         audioManager.playSnap();
       }
     } else if (this.isPaused) {
-      if (mouse.justPressed) {
-        this.handlePauseClick(mouse.x, mouse.y);
+      if (modalMouse.justPressed) {
+        this.handlePauseClick(modalMouse.x, modalMouse.y);
       }
     }
   }
@@ -307,8 +318,8 @@ export class UIManager {
     const layout = this.game && this.game.input && typeof this.game.input.getButtonLayout === 'function'
       ? this.game.input.getButtonLayout()
       : null;
-    const gx = isMobile && layout ? layout.gulal.x : (isMobile ? 940 : 1130);
-    const gy = isMobile && layout ? layout.gulal.y : (isMobile ? 614 : 640);
+    const gx = isMobile && layout ? layout.gulal.x : (isMobile ? vw - 340 : vw - 150);
+    const gy = isMobile && layout ? layout.gulal.y : (isMobile ? vh - 106 : vh - 80);
     const gw = isMobile && layout ? layout.gulal.w : (isMobile ? 128 : 120);
     const gh = isMobile && layout ? layout.gulal.h : (isMobile ? 54 : 48);
 
@@ -329,9 +340,9 @@ export class UIManager {
     }
 
     // 2. STREET MINI-MAP (Top-Center)
-    const mapX = 425;
-    const mapY = 18;
     const mapW = 475;
+    const mapX = Math.round((vw - mapW) / 2);
+    const mapY = 18;
     const mapH = 46;
 
     ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
@@ -411,9 +422,13 @@ export class UIManager {
     }
 
     // 3. FULLSCREEN BUTTON (Top-Right)
+    const pauseX = vw - 120;
+    const soundX = vw - 245;
+    const fsX = vw - 365;
+
     ctx.fillStyle = 'rgba(30, 41, 59, 0.9)';
     ctx.beginPath();
-    ctx.roundRect(915, 18, 110, 46, 8);
+    ctx.roundRect(fsX, 18, 110, 46, 8);
     ctx.fill();
     ctx.strokeStyle = '#ffd54f';
     ctx.lineWidth = 1.8;
@@ -422,12 +437,12 @@ export class UIManager {
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 12px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('⛶ FULLSCREEN', 970, 45);
+    ctx.fillText('⛶ FULLSCREEN', fsX + 55, 45);
 
     // 4. SOUND / SETTINGS BUTTON (Top-Right)
     ctx.fillStyle = this.isMuted ? 'rgba(213, 0, 0, 0.88)' : 'rgba(255, 143, 0, 0.88)';
     ctx.beginPath();
-    ctx.roundRect(1035, 18, 115, 46, 8);
+    ctx.roundRect(soundX, 18, 115, 46, 8);
     ctx.fill();
     ctx.strokeStyle = '#ffd54f';
     ctx.lineWidth = 2;
@@ -435,12 +450,12 @@ export class UIManager {
 
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 13px sans-serif';
-    ctx.fillText(this.isMuted ? '🔇 MUTED' : '🔊 SOUND', 1092, 45);
+    ctx.fillText(this.isMuted ? '🔇 MUTED' : '🔊 SOUND', soundX + 57, 45);
 
     // 5. PAUSE BUTTON (Top-Right edge)
     ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
     ctx.beginPath();
-    ctx.roundRect(1160, 18, 95, 46, 8);
+    ctx.roundRect(pauseX, 18, 95, 46, 8);
     ctx.fill();
     ctx.strokeStyle = '#ffd54f';
     ctx.lineWidth = 2;
@@ -448,16 +463,20 @@ export class UIManager {
 
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 13px sans-serif';
-    ctx.fillText('|| PAUSE', 1207, 45);
+    ctx.fillText('|| PAUSE', pauseX + 47, 45);
 
     ctx.restore();
   }
 
   renderContextPrompt(ctx, text = 'INTERACT [E]') {
+    const vw = this.game ? this.game.virtualWidth : 1280;
+    const vh = this.game ? this.game.virtualHeight : 720;
+    const cx = vw / 2;
+
     ctx.save();
     ctx.fillStyle = 'rgba(255, 143, 0, 0.9)';
     ctx.beginPath();
-    ctx.roundRect(520, 560, 240, 46, 23);
+    ctx.roundRect(cx - 120, vh - 160, 240, 46, 23);
     ctx.fill();
     ctx.strokeStyle = '#ffd54f';
     ctx.lineWidth = 2;
@@ -467,25 +486,36 @@ export class UIManager {
     ctx.font = 'bold 15px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(text, 640, 583);
+    ctx.fillText(text, cx, vh - 137);
     ctx.restore();
   }
 
   renderModals(ctx) {
-    if (this.showSettings) {
-      this.renderSettingsModal(ctx);
-    } else if (this.showCredits) {
-      this.renderCreditsModal(ctx);
-    } else if (this.isPaused) {
-      this.renderPauseMenu(ctx);
+    if (!this.showSettings && !this.showCredits && !this.isPaused) return;
+
+    if (this.game && typeof this.game.renderCenteredModal === 'function') {
+      this.game.renderCenteredModal(ctx, () => {
+        if (this.showSettings) {
+          this.renderSettingsModal(ctx);
+        } else if (this.showCredits) {
+          this.renderCreditsModal(ctx);
+        } else if (this.isPaused) {
+          this.renderPauseMenu(ctx);
+        }
+      });
+    } else {
+      if (this.showSettings) {
+        this.renderSettingsModal(ctx);
+      } else if (this.showCredits) {
+        this.renderCreditsModal(ctx);
+      } else if (this.isPaused) {
+        this.renderPauseMenu(ctx);
+      }
     }
   }
 
   renderPauseMenu(ctx) {
     ctx.save();
-    ctx.fillStyle = 'rgba(10, 14, 26, 0.85)';
-    ctx.fillRect(0, 0, 1280, 720);
-
     ctx.fillStyle = '#1e2433';
     ctx.beginPath();
     ctx.roundRect(460, 180, 360, 360, 16);
@@ -538,8 +568,6 @@ export class UIManager {
 
   renderSettingsModal(ctx) {
     ctx.save();
-    ctx.fillStyle = 'rgba(10, 14, 26, 0.88)';
-    ctx.fillRect(0, 0, 1280, 720);
 
     ctx.fillStyle = '#1e2433';
     ctx.beginPath();
@@ -653,8 +681,6 @@ export class UIManager {
 
   renderCreditsModal(ctx) {
     ctx.save();
-    ctx.fillStyle = 'rgba(10, 14, 26, 0.9)';
-    ctx.fillRect(0, 0, 1280, 720);
 
     ctx.fillStyle = '#1e2433';
     ctx.beginPath();
