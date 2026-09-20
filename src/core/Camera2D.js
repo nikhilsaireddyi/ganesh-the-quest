@@ -9,10 +9,10 @@ export class Camera2D {
     this.viewportWidth = viewportWidth;
     this.viewportHeight = viewportHeight;
 
-    this.x = 0;
-    this.y = 0;
-    this.targetX = 0;
-    this.targetY = 0;
+    this.x = 300;
+    this.y = 450;
+    this.targetX = 300;
+    this.targetY = 450;
 
     this.zoom = 1.0;
     this.targetZoom = 1.0;
@@ -108,6 +108,12 @@ export class Camera2D {
       this.x = Math.max(this.minX + halfW, Math.min(this.maxX - halfW, this.x));
     } else {
       this.x = (this.minX + this.maxX) / 2;
+    }
+
+    if (this.maxY - this.minY >= halfH * 2) {
+      this.y = Math.max(this.minY + halfH, Math.min(this.maxY - halfH, this.y));
+    } else {
+      this.y = (this.minY + this.maxY) / 2;
     }
   }
 

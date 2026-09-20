@@ -50,6 +50,9 @@ export class ProcessionScene {
     this.player.x = 420;
     this.game.camera.setBounds(0, 5000, 0, 720);
     this.game.camera.isScripted = false;
+    this.game.camera.follow(this.player, this.game.input.isMobile);
+    this.game.camera.x = this.game.camera.targetX;
+    this.game.camera.y = this.game.camera.targetY;
     this.game.dayNight.setTimeOfDay('DAY');
     audioManager.playMusicTheme('PROCESSION');
     this.initCompanionsAndSpectators();

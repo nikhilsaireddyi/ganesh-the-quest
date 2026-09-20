@@ -248,6 +248,9 @@ export class UIManager {
     if (!mission) return;
     if (this.game.photoMode && (this.game.photoMode.active || this.game.photoMode.showScrapbook)) return;
 
+    const vw = this.game ? this.game.virtualWidth : 1280;
+    const vh = this.game ? this.game.virtualHeight : 720;
+
     ctx.save();
     // 1. MISSION CARD (Top-Left)
     ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';

@@ -208,6 +208,9 @@ export class StreetScene {
   enter() {
     this.game.camera.setBounds(0, 3000, 0, 720);
     this.game.camera.releaseScripted();
+    this.game.camera.follow(this.player, this.game.input.isMobile);
+    this.game.camera.x = this.game.camera.targetX;
+    this.game.camera.y = this.game.camera.targetY;
     this.game.dayNight.setTimeOfDay('DAY');
     this.game.dayNight.setStorm(false);
     audioManager.playMusicTheme('FESTIVAL');
@@ -383,6 +386,7 @@ export class StreetScene {
     if (this.game.dialogue.active) {
       this.player.isWalking = false;
       this.player.vx = 0;
+      this.game.camera.follow(this.player, this.game.input.isMobile);
       return;
     }
 
